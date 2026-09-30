@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f3ff" />
+  <title>HTH Archive — 했또했</title>
+  <link rel="icon" href="assets/hth-icon-web.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-theme="lavender">
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="주요 메뉴">
+      <button class="brand brand--desktop" data-route="home" aria-label="HTH Archive 홈">
+        <img class="brand-icon" src="assets/hth-icon-web.png" alt="" />
+        <span class="brand-copy"><b>HTH Archive</b><small>했던 얘기, 또 찾기!</small></span>
+      </button>
+
+      <label class="side-search">
+        <span>⌕</span>
+        <input id="sideSearchInput" type="search" placeholder="기록 검색" autocomplete="off" />
+        <kbd>⌘ K</kbd>
+      </label>
+
+      <nav class="side-nav">
+        <button class="nav-item is-active" data-route="home"><span>⌂</span><em>홈</em></button>
+        <button class="nav-item" data-route="search"><span>⌕</span><em>검색</em></button>
+        <button class="nav-item" data-action="open-add"><span>＋</span><em>추가하기</em></button>
+        <button class="nav-item" data-route="calendar"><span>▣</span><em>캘린더</em></button>
+        <button class="nav-item" data-route="library"><span>▢</span><em>작품 목록</em></button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <button class="profile-card" data-action="open-settings">
+        <span class="avatar" id="profileAvatar">M</span>
+        <span><b id="profileHandle">@myaccount</b><small>기본 X 계정 · 데모</small></span>
+        <span>›</span>
+      </button>
+    </aside>
+
+    <main class="main" id="appMain">
+      <header class="mobile-topbar">
+        <button class="brand" data-route="home" aria-label="HTH Archive 홈"><img class="brand-icon brand-icon--mobile" src="assets/hth-icon-web.png" alt="HTH Archive" /></button>
+        <div class="mobile-actions">
+          <button class="icon-btn" data-route="search" aria-label="검색">⌕</button>
+          <button class="icon-btn" data-action="open-settings" aria-label="설정">⚙</button>
+        </div>
+      </header>
+      <div id="view"></div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="모바일 메뉴">
+      <button class="bottom-item is-active" data-route="home"><span>⌂</span><small>홈</small></button>
+      <button class="bottom-item" data-route="search"><span>⌕</span><small>검색</small></button>
+      <button class="bottom-add" data-action="open-add" aria-label="추가">＋</button>
+      <button class="bottom-item" data-route="calendar"><span>▣</span><small>캘린더</small></button>
+      <button class="bottom-item" data-route="library"><span>▢</span><small>보관함</small></button>
+    </nav>
+  </div>
+
+  <div class="modal-layer" id="modalLayer" aria-live="polite"></div>
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
