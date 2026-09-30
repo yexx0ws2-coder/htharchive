@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="HTH Archive">
+  <rect x="2" y="2" width="92" height="92" rx="24" fill="#ffffff" stroke="#ececf2" stroke-width="2"/>
+  <text x="16" y="58" font-family="Inter, Arial, sans-serif" font-size="31" font-weight="800" letter-spacing="-2" fill="#23222b">HTH</text>
+  <text x="64" y="38" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="700" fill="#8c7cf4">↻</text>
+</svg>
