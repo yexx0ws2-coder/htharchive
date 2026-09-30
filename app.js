@@ -1,55 +1,27 @@
 const seed = {
+  // 실제 서비스용 초기 상태: 데모 콘텐츠 없이 시작합니다.
+  // 'etc'는 작품에 아직 분류하지 않은 기록을 위한 내부 항목이며 작품 목록에는 노출되지 않습니다.
   works: [
-    {id:'work-a',title:'작품 A',tone:'lavender',icon:'✦',seasonStart:'2026-08-28',seasonEnd:'2026-10-11',castPool:[{actor:'배우 A',role:'배역 A'},{actor:'배우 B',role:'배역 B'}]},
-    {id:'work-b',title:'작품 B',tone:'peach',icon:'◌',seasonStart:'2026-09-01',seasonEnd:'2026-11-08',castPool:[{actor:'배우 C',role:'배역 C'},{actor:'배우 D',role:'배역 D'}]},
-    {id:'work-c',title:'작품 C',tone:'mint',icon:'✺',seasonStart:'',seasonEnd:'',castPool:[]},
     {id:'etc',title:'미분류',tone:'blue',icon:'⌁',seasonStart:'',seasonEnd:'',castPool:[]}
   ],
-  accounts: [
-    {handle:'@myaccount',label:'기본 계정',isDefault:true},
-    {handle:'@subaccount',label:'다른 계정',isDefault:false}
-  ],
-  viewings: [
-    {id:'v1',workId:'work-a',date:'2026-09-27',session:'낮공',time:'14:00',venue:'공연장 A',cast:[{actor:'배우 A',role:'배역 A'},{actor:'배우 B',role:'배역 B'}]},
-    {id:'v2',workId:'work-a',date:'2026-09-27',session:'밤공',time:'19:00',venue:'공연장 A',cast:[{actor:'배우 A',role:'배역 A'},{actor:'배우 E',role:''}]},
-    {id:'v3',workId:'work-b',date:'2026-09-14',session:'낮공',time:'15:00',venue:'공연장 B',cast:[{actor:'배우 C',role:'배역 C'},{actor:'배우 D',role:'배역 D'}]},
-    {id:'v4',workId:'work-a',date:'2026-10-04',session:'낮공',time:'14:00',venue:'공연장 A',cast:[{actor:'배우 A',role:'배역 A'}]}
-  ],
-  threads: [
-    {id:'t1',workId:'work-a',viewingIds:['v1'],title:'캐릭터 해석 메모',author:'@myaccount',createdAt:'2026-09-27T13:49:00',source:'x',urls:['https://example.com/x/post/001'],posts:[
-      {owner:true,text:'오늘 공연에서 특정 장면의 흐름이 유난히 다르게 느껴져서 계속 생각하게 됐다. 인물의 선택이 이전 관극과 달라 보였던 지점을 메모해 둔다.',media:[{id:'m1',type:'image',src:'assets/demo-stage.svg',alt:'공연 관련 예시 이미지',source:'x',order:0},{id:'m2',type:'image',src:'assets/demo-ticket.svg',alt:'관극 기록 예시 이미지',source:'x',order:1}]},
-      {owner:true,text:'같은 장면이어도 배우의 속도와 시선 처리에 따라 전혀 다른 의미로 읽히는 게 재미있었다.'},
-      {owner:false,author:'@friend',text:'나는 그 장면을 조금 다르게 봤어.',context:true},
-      {owner:true,text:'그 해석도 이해되는데 오늘은 다른 방향이 더 크게 남았다.'}
-    ]},
-    {id:'t2',workId:'work-a',viewingIds:['v1','v2'],title:'낮공·밤공 비교',author:'@myaccount',createdAt:'2026-09-27T23:38:00',source:'x',urls:['https://example.com/x/post/002'],posts:[
-      {owner:true,text:'같은 날 본 낮공과 밤공의 분위기가 꽤 달랐다. 같은 장면인데도 템포와 감정의 무게가 달라 보여서 비교해 두고 싶었다.'},
-      {owner:true,text:'밤공은 전체적으로 더 조용하게 느껴져서 마지막 장면의 여운이 더 오래 남았다.'}
-    ]},
-    {id:'t3',workId:'work-a',viewingIds:['v2'],title:'특정 장면 타이밍 메모',author:'@myaccount',createdAt:'2026-09-28T00:38:00',source:'x',urls:['https://example.com/x/post/003'],posts:[
-      {owner:true,text:'자정이 넘어서도 생각나는 건 특정 장면에서 멈추는 타이밍이었다. 짧은 정적 하나가 전체 장면의 인상을 바꿔 놓았다.',media:[{id:'m3',type:'image',src:'assets/demo-note.svg',alt:'감상 메모 예시 이미지',source:'x',order:0}]},
-      {owner:true,text:'다음에 다시 보면 또 다르게 느낄 수도 있지만 지금은 이 지점이 가장 크게 남는다.',quote:{author:'@friend',text:'나는 그 장면이 이미 결정을 내린 뒤처럼 보였어.'}}
-    ]},
-    {id:'t4',workId:'work-b',viewingIds:['v3'],title:'인물 관계 해석',author:'@myaccount',createdAt:'2026-09-15T22:40:00',source:'manual',urls:[],posts:[
-      {owner:true,text:'두 인물의 관계가 한쪽의 설명보다 서로의 선택이 겹치는 방식으로 보이는 게 좋았다.'},
-      {owner:true,text:'결말까지 이어지는 흐름 때문에 앞선 장면의 의미도 다시 보게 됐다.'}
-    ]},
-    {id:'t5',workId:'work-a',viewingIds:[],title:'공간 연출 단상',author:'@myaccount',createdAt:'2026-09-20T18:12:00',source:'manual',urls:[],posts:[{owner:true,text:'무대의 특정 공간이 반복해서 등장하면서 인물의 상태를 붙잡아 두는 장치처럼 느껴졌다.'}]}
-  ]
+  accounts: [],
+  viewings: [],
+  threads: []
 };
 
-const saved = JSON.parse(localStorage.getItem('hth-demo-state-v5-public-safe') || 'null');
+const saved = JSON.parse(localStorage.getItem('hth-state-v6-clean') || 'null');
 function normalizeState(input){
   const x=input || structuredClone(seed);
-  if(!Array.isArray(x.accounts)||!x.accounts.length) x.accounts=structuredClone(seed.accounts);
-  if(!x.accounts.some(a=>a.isDefault)) x.accounts[0].isDefault=true;
+  if(!Array.isArray(x.accounts)) x.accounts=[];
+  if(x.accounts.length && !x.accounts.some(a=>a.isDefault)) x.accounts[0].isDefault=true;
   x.works=(x.works||[]).map(w=>({...w,seasonStart:w.seasonStart||'',seasonEnd:w.seasonEnd||'',castPool:Array.isArray(w.castPool)?w.castPool:[]}));
   return x;
 }
 const state = normalizeState(saved || structuredClone(seed));
 let route = 'home';
 let routeParams = {};
-let selectedCalendarDate = '2026-09-27';
+let selectedCalendarDate = new Date().toISOString().slice(0,10);
+let calendarCursor = selectedCalendarDate.slice(0,7);
 let searchState = {q:'',work:'all',from:'',to:''};
 
 const $ = (s, root=document) => root.querySelector(s);
@@ -57,7 +29,7 @@ const $$ = (s, root=document) => [...root.querySelectorAll(s)];
 const view = $('#view');
 const modalLayer = $('#modalLayer');
 
-function persist(){ localStorage.setItem('hth-demo-state-v5-public-safe', JSON.stringify(state)); }
+function persist(){ localStorage.setItem('hth-state-v6-clean', JSON.stringify(state)); }
 function workBy(id){ return state.works.find(w=>w.id===id); }
 function viewingBy(id){ return state.viewings.find(v=>v.id===id); }
 function fmtDate(d){ const x=new Date(d); return `${x.getMonth()+1}.${x.getDate()}`; }
@@ -69,10 +41,10 @@ function getThreadText(t){ return `${t.title} ${t.posts.filter(p=>p.owner).map(p
 function postMedia(p){ return Array.isArray(p.media)?p.media:[]; }
 function firstThreadMedia(t){ for(const p of t.posts||[]){ if(p.owner&&postMedia(p).length) return postMedia(p)[0]; } return null; }
 function mediaCount(t){ return (t.posts||[]).filter(p=>p.owner).reduce((n,p)=>n+postMedia(p).length,0); }
-function defaultAccount(){ return state.accounts.find(a=>a.isDefault) || state.accounts[0] || {handle:'@myaccount',label:'기본',isDefault:true}; }
+function defaultAccount(){ return state.accounts.find(a=>a.isDefault) || state.accounts[0] || null; }
 function cleanHandle(v=''){ const t=v.trim(); if(!t)return ''; return t.startsWith('@')?t:`@${t}`; }
 function detectAuthorFromUrls(raw=''){ const m=raw.match(/(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/([^\/\s]+)\/status\/\d+/i); return m?cleanHandle(m[1]):''; }
-function accountOptions(selected='',allowAuto=false,detected=''){ return `${allowAuto?`<option value="auto">자동 인식${detected?` (${esc(detected)})`:''}</option>`:''}${state.accounts.map(a=>`<option value="${esc(a.handle)}" ${selected===a.handle?'selected':''}>${esc(a.handle)}${a.isDefault?' · 기본':''}${a.label?` · ${esc(a.label)}`:''}</option>`).join('')}`; }
+function accountOptions(selected='',allowAuto=false,detected=''){ const savedOptions=state.accounts.map(a=>`<option value="${esc(a.handle)}" ${selected===a.handle?'selected':''}>${esc(a.handle)}${a.isDefault?' · 기본':''}${a.label?` · ${esc(a.label)}`:''}</option>`).join(''); const empty=!state.accounts.length&&!allowAuto?'<option value="">설정에서 X 계정을 추가해 주세요</option>':''; return `${allowAuto?`<option value="auto">자동 인식${detected?` (${esc(detected)})`:''}</option>`:''}${empty}${savedOptions}`; }
 function seasonText(w){ if(!w?.seasonStart&&!w?.seasonEnd)return ''; const a=w.seasonStart?fmtLongDate(w.seasonStart):'미정'; const b=w.seasonEnd?fmtLongDate(w.seasonEnd):'미정'; return `${a} — ${b}`; }
 function inferredWorkCast(workId){ const w=workBy(workId); const seen=new Map(); (w?.castPool||[]).forEach(c=>seen.set(`${c.actor}|${c.role||''}`,{...c})); state.viewings.filter(v=>v.workId===workId).flatMap(v=>v.cast||[]).forEach(c=>{ const key=`${c.actor}|${c.role||''}`; if(!seen.has(key))seen.set(key,{...c}); }); return [...seen.values()]; }
 function actorKey(name=''){ return name.trim().toLocaleLowerCase(); }
@@ -88,7 +60,7 @@ function rememberedRole(workId, actor){
   }
   return '';
 }
-function syncProfile(){ const a=defaultAccount(); const h=$('#profileHandle'); if(h)h.textContent=a.handle; const av=$('#profileAvatar'); if(av)av.textContent=(a.handle.replace('@','')[0]||'H').toUpperCase(); }
+function syncProfile(){ const a=defaultAccount(); const h=$('#profileHandle'); if(h)h.textContent=a?.handle||'X 계정 추가'; const av=$('#profileAvatar'); if(av)av.textContent=a?(a.handle.replace('@','')[0]||'H').toUpperCase():'+'; const note=document.querySelector('.profile-card small'); if(note)note.textContent=a?(a.isDefault?'기본 X 계정':'X 계정'):'설정에서 계정을 등록하세요'; }
 function mediaGrid(media=[]){ if(!media.length)return ''; const items=media.slice(0,4); return `<div class="media-grid media-${Math.min(items.length,4)}">${items.map((m,i)=>`<button type="button" class="media-item" data-media-src="${esc(m.src)}" data-media-alt="${esc(m.alt||'첨부 이미지')}"><img src="${esc(m.src)}" alt="${esc(m.alt||'첨부 이미지')}" loading="lazy">${media.length>4&&i===3?`<span class="media-more">+${media.length-4}</span>`:''}</button>`).join('')}</div>`; }
 function fileToMedia(file){ return new Promise((resolve,reject)=>{ const reader=new FileReader(); reader.onerror=reject; reader.onload=()=>{ const img=new Image(); img.onload=()=>{ const max=1400,scale=Math.min(1,max/Math.max(img.width,img.height)); const canvas=document.createElement('canvas'); canvas.width=Math.max(1,Math.round(img.width*scale)); canvas.height=Math.max(1,Math.round(img.height*scale)); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); const mime=file.type==='image/png'?'image/png':'image/jpeg'; const src=canvas.toDataURL(mime,mime==='image/png'?undefined:.84); resolve({id:'m'+Date.now()+Math.random().toString(36).slice(2,7),type:'image',src,alt:file.name.replace(/\.[^.]+$/,''),source:'manual',order:0}); }; img.onerror=reject; img.src=reader.result; }; reader.readAsDataURL(file); }); }
 async function filesToMedia(fileList){ const files=[...fileList].slice(0,4); return Promise.all(files.map(fileToMedia)); }
@@ -116,9 +88,9 @@ function renderHome(){
   view.innerHTML=`<section class="page">
     <div class="page-head"><div><div class="eyebrow">HTH Archive</div><h1 class="page-title">했던 얘기, 또 찾기!</h1><p class="page-sub">나만의 관극 감상 외장 드라이브</p></div><div class="toolbar"><button class="btn" data-action="new-viewing">＋ 새 관극</button><button class="btn primary" data-action="open-add">＋ 기록 추가</button></div></div>
     <form class="hero-search" id="homeSearch"><span>⌕</span><input id="homeSearchInput" placeholder="기록에서 단어, 문장 검색하기…" autocomplete="off"><button class="search-go" aria-label="검색">→</button></form>
-    <section class="section"><div class="section-head"><h2 class="section-title">최근 작품</h2><button class="text-btn" data-route="library">전체 보기 ›</button></div><div class="work-grid">${recentWorks.map(w=>workCard(w)).join('')}</div></section>
-    <section class="section"><div class="section-head"><h2 class="section-title">최근 관극</h2><button class="text-btn" data-action="new-viewing">＋ 새 관극</button></div><div class="viewing-list">${recentViewings.map(v=>viewingCard(v)).join('')}</div></section>
-    <section class="section"><div class="section-head"><h2 class="section-title">최근 백업된 타래</h2><button class="text-btn" data-route="search">검색으로 찾기 ›</button></div><div class="thread-grid">${recentThreads.map(t=>threadCard(t)).join('')}</div></section>
+    <section class="section"><div class="section-head"><h2 class="section-title">최근 작품</h2><button class="text-btn" data-route="library">전체 보기 ›</button></div><div class="work-grid">${recentWorks.length?recentWorks.map(w=>workCard(w)).join(''):`<div class="empty empty-action"><b>아직 등록된 작품이 없어요.</b><span>첫 작품을 추가하면 관극과 감상을 작품별로 모아볼 수 있어요.</span><button class="btn" data-action="new-work">＋ 첫 작품 추가</button></div>`}</div></section>
+    <section class="section"><div class="section-head"><h2 class="section-title">최근 관극</h2><button class="text-btn" data-action="new-viewing">＋ 새 관극</button></div><div class="viewing-list">${recentViewings.length?recentViewings.map(v=>viewingCard(v)).join(''):`<div class="empty">아직 저장된 관극이 없어요.</div>`}</div></section>
+    <section class="section"><div class="section-head"><h2 class="section-title">최근 백업된 타래</h2><button class="text-btn" data-route="search">검색으로 찾기 ›</button></div><div class="thread-grid">${recentThreads.length?recentThreads.map(t=>threadCard(t)).join(''):`<div class="empty">아직 백업된 타래가 없어요. 기록을 추가하면 여기에 나타나요.</div>`}</div></section>
   </section>`;
   bindCommon();
   $('#homeSearch').addEventListener('submit',e=>{e.preventDefault();searchState.q=$('#homeSearchInput').value.trim();routeTo('search');});
@@ -152,14 +124,27 @@ function resultCard(t){const q=searchState.q.trim();let postIndex=Math.max(0,t.p
 function highlight(html,q){if(!q)return html;const safe=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');return html.replace(new RegExp(safe,'gi'),m=>`<mark>${m}</mark>`)}
 
 function renderCalendar(){
-  const year=2026,month=8;const first=new Date(year,month,1).getDay();const days=new Date(year,month+1,0).getDate();let cells='';for(let i=0;i<first;i++)cells+='<span class="day"></span>';for(let d=1;d<=days;d++){const date=`2026-09-${String(d).padStart(2,'0')}`;const has=state.threads.some(t=>t.createdAt.startsWith(date));cells+=`<button class="day ${has?'has-record':''} ${selectedCalendarDate===date?'selected':''}" data-date="${date}">${d}</button>`}
+  const [yearStr,monthStr]=calendarCursor.split('-');
+  const year=Number(yearStr), month=Number(monthStr)-1;
+  const first=new Date(year,month,1).getDay();
+  const days=new Date(year,month+1,0).getDate();
+  let cells='';
+  for(let i=0;i<first;i++)cells+='<span class="day"></span>';
+  for(let d=1;d<=days;d++){
+    const date=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const has=state.threads.some(t=>t.createdAt.startsWith(date));
+    cells+=`<button class="day ${has?'has-record':''} ${selectedCalendarDate===date?'selected':''}" data-date="${date}">${d}</button>`;
+  }
   const agenda=state.threads.filter(t=>t.createdAt.startsWith(selectedCalendarDate));
-  view.innerHTML=`<section class="page"><div class="page-head"><div><div class="eyebrow">Calendar</div><h1 class="page-title">작성일로 보기</h1><p class="page-sub">관극일이 아니라 실제로 트윗을 작성한 날짜 기준이에요.</p></div></div><div class="calendar-layout"><div class="calendar-card"><div class="calendar-head"><h3>2026년 9월</h3><div>‹ &nbsp; ›</div></div><div class="calendar-grid">${['일','월','화','수','목','금','토'].map(x=>`<span class="dow">${x}</span>`).join('')}${cells}</div></div><aside class="agenda"><h3>${fmtLongDate(selectedCalendarDate)}</h3><div class="agenda-list">${agenda.length?agenda.map(t=>`<button class="agenda-item" data-thread="${t.id}"><b>${esc(t.title)}</b><small>${esc(workBy(t.workId)?.title||'미분류')} · ${t.posts.filter(p=>p.owner).length} posts</small></button>`).join(''):`<div class="empty">이날 작성한 기록이 없어요.</div>`}</div></aside></div></section>`;
-  bindCommon();$$('[data-date]').forEach(b=>b.addEventListener('click',()=>{selectedCalendarDate=b.dataset.date;renderCalendar()}));
+  view.innerHTML=`<section class="page"><div class="page-head"><div><div class="eyebrow">Calendar</div><h1 class="page-title">작성일로 보기</h1><p class="page-sub">관극일이 아니라 실제로 기록을 작성한 날짜 기준이에요.</p></div></div><div class="calendar-layout"><div class="calendar-card"><div class="calendar-head"><h3>${year}년 ${month+1}월</h3><div><button class="calendar-nav" id="prevMonth" aria-label="이전 달">‹</button><button class="calendar-nav" id="nextMonth" aria-label="다음 달">›</button></div></div><div class="calendar-grid">${['일','월','화','수','목','금','토'].map(x=>`<span class="dow">${x}</span>`).join('')}${cells}</div></div><aside class="agenda"><h3>${fmtLongDate(selectedCalendarDate)}</h3><div class="agenda-list">${agenda.length?agenda.map(t=>`<button class="agenda-item" data-thread="${t.id}"><b>${esc(t.title)}</b><small>${esc(workBy(t.workId)?.title||'미분류')} · ${t.posts.filter(p=>p.owner).length} posts</small></button>`).join(''):`<div class="empty">이날 작성한 기록이 없어요.</div>`}</div></aside></div></section>`;
+  bindCommon();
+  $$('[data-date]').forEach(b=>b.addEventListener('click',()=>{selectedCalendarDate=b.dataset.date;renderCalendar()}));
+  $('#prevMonth')?.addEventListener('click',()=>{const d=new Date(year,month-1,1);calendarCursor=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;selectedCalendarDate=`${calendarCursor}-01`;renderCalendar();});
+  $('#nextMonth')?.addEventListener('click',()=>{const d=new Date(year,month+1,1);calendarCursor=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;selectedCalendarDate=`${calendarCursor}-01`;renderCalendar();});
 }
 
 function renderLibrary(){
-  view.innerHTML=`<section class="page"><div class="page-head"><div><div class="eyebrow">Library</div><h1 class="page-title">작품 목록</h1><p class="page-sub">작품명·시즌·배우/배역·대표 아이콘은 언제든 가볍게 수정할 수 있어요.</p></div><div class="toolbar"><button class="btn" data-action="new-work">＋ 새 작품</button><button class="btn primary" data-action="new-viewing">＋ 새 관극</button></div></div><div class="library-grid">${state.works.filter(w=>w.id!=='etc').map(w=>{const s=workStats(w.id);const actors=inferredWorkCast(w.id);return `<div class="library-card-shell"><button class="library-card" data-work="${w.id}"><span class="mini-icon">${esc(w.icon||'✦')}</span><h3>${esc(w.title)}</h3>${seasonText(w)?`<div class="library-season">${seasonText(w)}</div>`:''}<div class="stat-row"><span>관극 ${s.viewings}</span><span>타래 ${s.threads}</span></div><div class="chips" style="margin-top:14px">${actors.slice(0,4).map(c=>`<span class="chip accent">${esc(c.actor)}${c.role?` · ${esc(c.role)}`:''}</span>`).join('')}</div></button><button class="work-edit-btn" data-action="edit-work" data-work-id="${w.id}" aria-label="${esc(w.title)} 작품 정보 수정">✎</button></div>`}).join('')}</div></section>`;bindCommon();
+  view.innerHTML=`<section class="page"><div class="page-head"><div><div class="eyebrow">Library</div><h1 class="page-title">작품 목록</h1><p class="page-sub">작품명·시즌·배우/배역·대표 아이콘은 언제든 가볍게 수정할 수 있어요.</p></div><div class="toolbar"><button class="btn" data-action="new-work">＋ 새 작품</button><button class="btn primary" data-action="new-viewing">＋ 새 관극</button></div></div><div class="library-grid">${state.works.filter(w=>w.id!=='etc').length?state.works.filter(w=>w.id!=='etc').map(w=>{const s=workStats(w.id);const actors=inferredWorkCast(w.id);return `<div class="library-card-shell"><button class="library-card" data-work="${w.id}"><span class="mini-icon">${esc(w.icon||'✦')}</span><h3>${esc(w.title)}</h3>${seasonText(w)?`<div class="library-season">${seasonText(w)}</div>`:''}<div class="stat-row"><span>관극 ${s.viewings}</span><span>타래 ${s.threads}</span></div><div class="chips" style="margin-top:14px">${actors.slice(0,4).map(c=>`<span class="chip accent">${esc(c.actor)}${c.role?` · ${esc(c.role)}`:''}</span>`).join('')}</div></button><button class="work-edit-btn" data-action="edit-work" data-work-id="${w.id}" aria-label="${esc(w.title)} 작품 정보 수정">✎</button></div>`}).join(''):`<div class="empty empty-action"><b>작품 보관함이 비어 있어요.</b><span>작품을 하나 추가해 아카이브를 시작해보세요.</span><button class="btn primary" data-action="new-work">＋ 새 작품</button></div>`}</div></section>`;bindCommon();
 }
 
 function renderWork(id){
@@ -197,7 +182,7 @@ function openAdd(){modalLayer.innerHTML=`<div class="sheet"><div class="modal-he
 
 function openImport(){
   const def=defaultAccount();
-  modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>링크로 가져오기</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><form class="form-grid" id="importForm"><div class="field"><label>타래 URL</label><textarea id="importUrls" placeholder="https://x.com/username/status/…\nhttps://x.com/username/status/…"></textarea><span class="field-hint">여러 URL을 한 번에 붙여넣을 수 있어요.</span></div><div class="field"><label>작성 계정</label><select id="importAuthor">${accountOptions(def.handle,true,'@myaccount')}</select><span class="field-hint" id="authorDetectHint">URL에서 작성 계정을 감지해요. 필요하면 다른 내 계정으로 바꿀 수 있어요.</span></div><div class="field"><label>작품</label><select id="importWork">${state.works.filter(w=>w.id!=='etc').map(w=>`<option value="${w.id}">${esc(w.title)}</option>`).join('')}</select></div><div class="field"><label>타래 제목</label><input id="importTitle" value="오늘 공연 감상"><span class="field-hint">첫 포스트에서 자동으로 만들고, 원하는 제목으로 고칠 수 있어요.</span></div><div class="field"><label>관극 연결 (선택)</label><div class="chips" id="importViewingChips"></div></div><div class="footer-actions"><button type="button" class="btn" data-close>취소</button><button type="button" class="btn primary" id="previewImport">가져올 포스트 확인</button></div></form></div></div>`;
+  modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>링크로 가져오기</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><form class="form-grid" id="importForm"><div class="field"><label>타래 URL</label><textarea id="importUrls" placeholder="https://x.com/username/status/…\nhttps://x.com/username/status/…"></textarea><span class="field-hint">여러 URL을 한 번에 붙여넣을 수 있어요.</span></div><div class="field"><label>작성 계정</label><select id="importAuthor">${accountOptions(def?.handle||'',true,'')}</select><span class="field-hint" id="authorDetectHint">URL에서 작성 계정을 감지해요. 필요하면 다른 내 계정으로 바꿀 수 있어요.</span></div><div class="field"><label>작품</label><select id="importWork">${state.works.filter(w=>w.id!=='etc').map(w=>`<option value="${w.id}">${esc(w.title)}</option>`).join('')}</select></div><div class="field"><label>타래 제목</label><input id="importTitle" placeholder="예: 오늘 공연 감상"><span class="field-hint">첫 포스트에서 자동으로 만들고, 원하는 제목으로 고칠 수 있어요.</span></div><div class="field"><label>관극 연결 (선택)</label><div class="chips" id="importViewingChips"></div></div><div class="footer-actions"><button type="button" class="btn" data-close>취소</button><button type="button" class="btn primary" id="previewImport">가져올 포스트 확인</button></div></form></div></div>`;
   bindModalClose();
   const urls=$('#importUrls'), author=$('#importAuthor'), work=$('#importWork');
   function refreshDetected(){const detected=detectAuthorFromUrls(urls.value); const auto=author.querySelector('option[value="auto"]'); if(auto)auto.textContent=`자동 인식${detected?` (${detected})`:''}`; $('#authorDetectHint').textContent=detected?`URL에서 ${detected} 계정을 감지했어요. 필요하면 다른 내 계정으로 바꿀 수 있어요.`:'URL에서 계정을 자동으로 인식하거나 드롭다운에서 선택할 수 있어요.';}
@@ -207,27 +192,27 @@ function openImport(){
 }
 
 function openImportPreview(){
-  const title=$('#importTitle').value.trim()||'제목 없는 타래';const workId=$('#importWork').value;const rawUrls=$('#importUrls').value;const authorChoice=$('#importAuthor').value;const author=authorChoice==='auto'?(detectAuthorFromUrls(rawUrls)||defaultAccount().handle):authorChoice;const viewings=$$('input[name="importViewing"]:checked').map(x=>x.value);const urls=rawUrls.split(/\n+/).map(x=>x.trim()).filter(Boolean);
-  const demo=[
-      {owner:true,text:'오늘 공연에서 유난히 기억에 남은 장면이 있어서 짧게 메모해 둔다.',media:[{id:'im1',type:'image',src:'assets/demo-stage.svg',alt:'X에서 가져온 예시 첨부 이미지',source:'x',order:0},{id:'im2',type:'image',src:'assets/demo-ticket.svg',alt:'X에서 가져온 두 번째 예시 이미지',source:'x',order:1}]},
-      {owner:true,text:'같은 장면도 관극마다 인상이 달라져서 다음에 다시 비교해 보고 싶다.'},
-      {owner:false,author:'@friend',text:'나는 이 부분을 조금 다르게 봤어.',context:true},
-      {owner:true,text:'그렇게 볼 수도 있겠다. 오늘은 다른 포인트가 더 크게 느껴졌다.',quote:{author:'@friend',text:'이 장면의 의미가 뒤쪽에서 다시 연결되는 것 같아.',mediaCount:1}},
-      {owner:true,text:'마지막 장면까지 이어서 보니까 앞의 장면도 다시 생각하게 됐다.',media:[{id:'im3',type:'image',src:'assets/demo-note.svg',alt:'X에서 가져온 감상 예시 이미지',source:'x',order:0}]}
-    ];
-  modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>가져올 타래 선택</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><div class="import-summary"><b>${esc(author)}</b><span>${esc(title)}</span></div><p class="page-sub" style="margin-top:8px">내 글은 기본 선택하고, 내 포스트의 첨부 이미지는 함께 백업합니다. 타인의 답글·인용 이미지는 검색/파일 백업에서 제외해요.</p><div class="preview-list">${demo.map((p,i)=>`<label class="preview-post ${!p.owner?'is-context':''}"><input type="checkbox" ${p.owner?'checked':''} data-preview-index="${i}"><span><b>${p.owner?`POST ${i+1}`:`${esc(p.author)} · 답글 맥락`}</b><p>${esc(p.text)}</p>${p.owner&&postMedia(p).length?`<div class="preview-media-strip">${postMedia(p).map(m=>`<img src="${esc(m.src)}" alt="">`).join('')}<small>이미지 ${postMedia(p).length}개도 함께 저장</small></div>`:''}${p.quote?`<span class="mini-context-note">인용 포함${p.quote.mediaCount?` · 이미지 ${p.quote.mediaCount}개는 원문 맥락만`:''}</span>`:''}</span></label>`).join('')}</div><div class="footer-actions" style="margin-top:16px"><button class="btn" id="backImport">이전</button><button class="btn primary" id="saveImport">선택한 포스트 저장</button></div></div></div>`;
-  bindModalClose();$('#backImport').addEventListener('click',openImport);$('#saveImport').addEventListener('click',()=>{const selected=$$('[data-preview-index]:checked').map(x=>demo[Number(x.dataset.previewIndex)]);const t={id:'t'+Date.now(),workId,viewingIds:viewings,title,author,createdAt:new Date().toISOString(),source:'x',urls,posts:selected};state.threads.unshift(t);persist();closeModal();toast('타래와 첨부 이미지를 저장했어요.');routeTo('thread',{id:t.id});});
+  const rawUrls=$('#importUrls')?.value.trim()||'';
+  if(!rawUrls){ toast('X 타래 URL을 입력해 주세요.'); return; }
+  const urls=rawUrls.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const valid=urls.every(u=>/(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/[^\/\s]+\/status\/\d+/i.test(u));
+  if(!valid){ toast('올바른 X 게시물 URL인지 확인해 주세요.'); return; }
+  modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>링크 가져오기</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><div class="setup-notice"><span class="setup-icon">↗</span><h3>X API 연결 전 단계예요.</h3><p>현재 배포본에는 가짜 타래를 생성하지 않도록 데모 가져오기 기능을 제거해 두었어요. X 개발자 앱과 OAuth를 연결하면 이 화면에서 실제 원문과 첨부 이미지를 불러오게 됩니다.</p><div class="footer-actions"><button class="btn" data-close>닫기</button><button class="btn primary" id="goManual">직접 추가하기</button></div></div></div></div>`;
+  bindModalClose();
+  $('#goManual')?.addEventListener('click',openManual);
 }
 
-function openManual(){modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>직접 추가하기</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><form class="form-grid" id="manualForm"><div class="field"><label>작품</label><select id="manualWork">${state.works.filter(w=>w.id!=='etc').map(w=>`<option value="${w.id}">${esc(w.title)}</option>`).join('')}</select></div><div class="field"><label>작성 계정</label><select id="manualAuthor">${accountOptions(defaultAccount().handle,false)}</select></div><div class="field"><label>타래 제목</label><input id="manualTitle" placeholder="예: 캐릭터 해석 메모"></div><div id="manualPosts"></div><button type="button" class="btn" id="addManualPost">＋ 다음 포스트 추가</button><div class="footer-actions"><button type="button" class="btn" data-close>취소</button><button type="button" class="btn primary" id="saveManual">저장</button></div></form></div></div>`;bindModalClose();let n=0;function addEditor(){n++;const box=document.createElement('div');box.className='post-editor';box.innerHTML=`<div class="post-editor-head"><b>POST ${n}</b><div class="inline-actions"><button type="button" class="mini-btn" data-quote>＋ 인용</button><button type="button" class="mini-btn" data-context>＋ 답글 맥락</button>${n>1?'<button type="button" class="mini-btn" data-remove>삭제</button>':''}</div></div><textarea class="manual-text" placeholder="텍스트를 붙여넣어 주세요…"></textarea><div class="post-media-editor"><label class="media-upload">🖼 이미지 추가<input class="manual-media-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label><small>한 포스트에 최대 4장 · OCR 없이 이미지 그대로 보관</small><div class="media-draft-preview"></div></div><div class="manual-extras"></div>`;$('#manualPosts').append(box);const input=$('.manual-media-input',box),preview=$('.media-draft-preview',box);input.addEventListener('change',()=>{const files=[...input.files].slice(0,4);preview.innerHTML=files.map(f=>`<span>${esc(f.name)}</span>`).join('');});$('[data-remove]',box)?.addEventListener('click',()=>box.remove());$('[data-quote]',box).addEventListener('click',()=>{$('.manual-extras',box).insertAdjacentHTML('beforeend',`<div class="extra-editor quote-editor"><input class="quote-author" placeholder="인용 작성자 (선택)"><textarea class="quote-text" placeholder="인용 내용을 붙여넣어 주세요"></textarea></div>`)});$('[data-context]',box).addEventListener('click',()=>{$('.manual-extras',box).insertAdjacentHTML('beforeend',`<div class="extra-editor context-editor"><input class="context-author" placeholder="답글 작성자 @아이디"><textarea class="context-text" placeholder="맥락용 답글"></textarea></div>`)});$('.manual-text',box).focus();}addEditor();$('#addManualPost').addEventListener('click',addEditor);$('#saveManual').addEventListener('click',async()=>{const editors=$$('.post-editor','#manualPosts');const posts=[];for(const box of editors){const text=$('.manual-text',box).value.trim();if(!text)continue;const media=await filesToMedia($('.manual-media-input',box).files);const qText=$('.quote-text',box)?.value.trim();const cText=$('.context-text',box)?.value.trim();posts.push({owner:true,text,media,...(qText?{quote:{author:$('.quote-author',box)?.value.trim()||'',text:qText}}:{})});if(cText)posts.push({owner:false,author:$('.context-author',box)?.value.trim()||'@context',text:cText,context:true});}if(!posts.some(p=>p.owner)){toast('포스트를 한 개 이상 입력해 주세요.');return}const firstOwner=posts.find(p=>p.owner);const title=$('#manualTitle').value.trim()||firstOwner.text.slice(0,34);const t={id:'t'+Date.now(),workId:$('#manualWork').value,viewingIds:[],title,author:$('#manualAuthor').value||defaultAccount().handle,createdAt:new Date().toISOString(),source:'manual',urls:[],posts};state.threads.unshift(t);persist();closeModal();toast('텍스트와 이미지를 함께 저장했어요.');routeTo('thread',{id:t.id});});}
+function openManual(){modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>직접 추가하기</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><form class="form-grid" id="manualForm"><div class="field"><label>작품</label><select id="manualWork"><option value="etc">미분류</option>${state.works.filter(w=>w.id!=='etc').map(w=>`<option value="${w.id}">${esc(w.title)}</option>`).join('')}</select></div><div class="field"><label>작성 계정</label>${state.accounts.length?`<select id="manualAuthor">${accountOptions(defaultAccount()?.handle||'',false)}</select>`:`<input id="manualAuthor" placeholder="@내계정 (선택)">`}</div><div class="field"><label>타래 제목</label><input id="manualTitle" placeholder="예: 캐릭터 해석 메모"></div><div id="manualPosts"></div><button type="button" class="btn" id="addManualPost">＋ 다음 포스트 추가</button><div class="footer-actions"><button type="button" class="btn" data-close>취소</button><button type="button" class="btn primary" id="saveManual">저장</button></div></form></div></div>`;bindModalClose();let n=0;function addEditor(){n++;const box=document.createElement('div');box.className='post-editor';box.innerHTML=`<div class="post-editor-head"><b>POST ${n}</b><div class="inline-actions"><button type="button" class="mini-btn" data-quote>＋ 인용</button><button type="button" class="mini-btn" data-context>＋ 답글 맥락</button>${n>1?'<button type="button" class="mini-btn" data-remove>삭제</button>':''}</div></div><textarea class="manual-text" placeholder="텍스트를 붙여넣어 주세요…"></textarea><div class="post-media-editor"><label class="media-upload">🖼 이미지 추가<input class="manual-media-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden></label><small>한 포스트에 최대 4장 · OCR 없이 이미지 그대로 보관</small><div class="media-draft-preview"></div></div><div class="manual-extras"></div>`;$('#manualPosts').append(box);const input=$('.manual-media-input',box),preview=$('.media-draft-preview',box);input.addEventListener('change',()=>{const files=[...input.files].slice(0,4);preview.innerHTML=files.map(f=>`<span>${esc(f.name)}</span>`).join('');});$('[data-remove]',box)?.addEventListener('click',()=>box.remove());$('[data-quote]',box).addEventListener('click',()=>{$('.manual-extras',box).insertAdjacentHTML('beforeend',`<div class="extra-editor quote-editor"><input class="quote-author" placeholder="인용 작성자 (선택)"><textarea class="quote-text" placeholder="인용 내용을 붙여넣어 주세요"></textarea></div>`)});$('[data-context]',box).addEventListener('click',()=>{$('.manual-extras',box).insertAdjacentHTML('beforeend',`<div class="extra-editor context-editor"><input class="context-author" placeholder="답글 작성자 @아이디"><textarea class="context-text" placeholder="맥락용 답글"></textarea></div>`)});$('.manual-text',box).focus();}addEditor();$('#addManualPost').addEventListener('click',addEditor);$('#saveManual').addEventListener('click',async()=>{const editors=$$('.post-editor','#manualPosts');const posts=[];for(const box of editors){const text=$('.manual-text',box).value.trim();if(!text)continue;const media=await filesToMedia($('.manual-media-input',box).files);const qText=$('.quote-text',box)?.value.trim();const cText=$('.context-text',box)?.value.trim();posts.push({owner:true,text,media,...(qText?{quote:{author:$('.quote-author',box)?.value.trim()||'',text:qText}}:{})});if(cText)posts.push({owner:false,author:$('.context-author',box)?.value.trim()||'@context',text:cText,context:true});}if(!posts.some(p=>p.owner)){toast('포스트를 한 개 이상 입력해 주세요.');return}const firstOwner=posts.find(p=>p.owner);const title=$('#manualTitle').value.trim()||firstOwner.text.slice(0,34);const t={id:'t'+Date.now(),workId:$('#manualWork').value,viewingIds:[],title,author:cleanHandle($('#manualAuthor').value)||defaultAccount()?.handle||'',createdAt:new Date().toISOString(),source:'manual',urls:[],posts};state.threads.unshift(t);persist();closeModal();toast('텍스트와 이미지를 함께 저장했어요.');routeTo('thread',{id:t.id});});}
 
 function openViewing(prefWork){
+  const availableWorks=state.works.filter(w=>w.id!=='etc');
+  if(!availableWorks.length){ toast('먼저 작품을 하나 추가해 주세요.'); openWorkCreator(); return; }
   let castEntries=[];
   let session='낮공';
 
   modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>새 관극 추가</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><form class="form-grid">
     <div class="field"><label>작품</label><select id="viewWork">${state.works.filter(w=>w.id!=='etc').map(w=>`<option value="${w.id}" ${prefWork===w.id?'selected':''}>${esc(w.title)}</option>`).join('')}</select></div>
-    <div class="field"><label>관극일</label><input type="date" id="viewDate" value="2026-09-27"></div>
+    <div class="field"><label>관극일</label><input type="date" id="viewDate" value="${new Date().toISOString().slice(0,10)}"></div>
     <div class="field"><label>회차</label><div class="segment" id="sessionSegment"><button type="button" class="is-active" data-session="낮공">낮공</button><button type="button" data-session="밤공">밤공</button><button type="button" data-session="직접입력">직접 입력</button></div></div>
     <div class="field"><label>극장 (선택)</label><input id="viewVenue" placeholder="예: 공연장 이름"></div>
     <div class="field">
@@ -349,7 +334,7 @@ function openViewing(prefWork){
 
 function openSettings(){
   const current=document.body.dataset.theme;const def=defaultAccount();
-  modalLayer.innerHTML=`<div class="modal settings-modal"><div class="modal-head"><h2>설정</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><section class="settings-section"><h3>테마</h3><p class="page-sub">앱의 분위기를 원하는 대로 바꿔보세요.</p><div class="theme-grid">${['light','lavender','peach','dark'].map(t=>`<button class="theme-option ${current===t?'is-active':''}" data-theme-value="${t}"><div class="theme-swatch"></div><b>${t[0].toUpperCase()+t.slice(1)}</b></button>`).join('')}</div></section><section class="settings-section"><div class="settings-section-head"><div><h3>나의 X 계정</h3><p class="page-sub">링크를 가져올 때 URL에서 계정을 자동 인식하고, 저장된 계정 중 하나로 바꿀 수 있어요.</p></div></div><div class="account-list">${state.accounts.map((a,i)=>`<div class="account-row"><label class="account-main"><input type="radio" name="defaultAccount" value="${i}" ${a.isDefault?'checked':''}><span><b>${esc(a.handle)}</b><small>${a.label?esc(a.label):'계정'}${a.isDefault?' · 기본':''}</small></span></label>${state.accounts.length>1?`<button class="mini-btn" data-remove-account="${i}">삭제</button>`:''}</div>`).join('')}</div><div class="account-add"><input id="newAccountHandle" placeholder="@다른계정"><input id="newAccountLabel" placeholder="메모 (선택)"><button class="btn" id="addAccount">＋ 계정 추가</button></div></section></div></div>`;
+  modalLayer.innerHTML=`<div class="modal settings-modal"><div class="modal-head"><h2>설정</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><section class="settings-section"><h3>테마</h3><p class="page-sub">앱의 분위기를 원하는 대로 바꿔보세요.</p><div class="theme-grid">${['light','lavender','peach','dark'].map(t=>`<button class="theme-option ${current===t?'is-active':''}" data-theme-value="${t}"><div class="theme-swatch"></div><b>${t[0].toUpperCase()+t.slice(1)}</b></button>`).join('')}</div></section><section class="settings-section"><div class="settings-section-head"><div><h3>나의 X 계정</h3><p class="page-sub">링크를 가져올 때 URL에서 계정을 자동 인식하고, 저장된 계정 중 하나로 바꿀 수 있어요.</p></div></div><div class="account-list">${state.accounts.length?state.accounts.map((a,i)=>`<div class="account-row"><label class="account-main"><input type="radio" name="defaultAccount" value="${i}" ${a.isDefault?'checked':''}><span><b>${esc(a.handle)}</b><small>${a.label?esc(a.label):'계정'}${a.isDefault?' · 기본':''}</small></span></label>${state.accounts.length>1?`<button class="mini-btn" data-remove-account="${i}">삭제</button>`:''}</div>`).join(''):'<div class="empty">아직 등록된 X 계정이 없어요.</div>'}</div><div class="account-add"><input id="newAccountHandle" placeholder="@다른계정"><input id="newAccountLabel" placeholder="메모 (선택)"><button class="btn" id="addAccount">＋ 계정 추가</button></div></section></div></div>`;
   bindModalClose();
   $$('[data-theme-value]').forEach(b=>b.addEventListener('click',()=>{document.body.dataset.theme=b.dataset.themeValue;localStorage.setItem('hth-theme',b.dataset.themeValue);$$('[data-theme-value]').forEach(x=>x.classList.toggle('is-active',x===b));}));
   $$('input[name="defaultAccount"]').forEach(r=>r.addEventListener('change',()=>{state.accounts.forEach((a,i)=>a.isDefault=i===Number(r.value));persist();syncProfile();toast(`${defaultAccount().handle}을 기본 계정으로 설정했어요.`);openSettings();}));
