@@ -28,3 +28,5 @@ README.md
 
 ## 중요
 현재 데이터는 **브라우저 localStorage**에만 저장됩니다. 다른 기기와 동기화되지 않으며 브라우저 데이터를 지우면 사라집니다. 실제 사용 전 Cloudflare D1/R2 연결 단계가 필요합니다.
+
+Preview build test
