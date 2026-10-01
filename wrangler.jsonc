@@ -6,5 +6,12 @@
     "directory": "./public/",
     "binding": "ASSETS"
   },
-  "previews": {}
+"previews": {
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hth-archive-db",
+      "database_id": "여기에 D1 database ID"
+    }
+  ]
 }
