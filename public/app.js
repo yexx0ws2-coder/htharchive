@@ -508,6 +508,7 @@ function openWorkEditor(workId){
     toast('작품 수정 중 오류가 발생했어요.');
   }
 });
+  $('#deleteWork').addEventListener('click', async () => {
   const ok = confirm(
     `${w.title} 작품을 삭제할까요?\n연결된 관극과 타래는 미분류로 이동합니다.`
   );
