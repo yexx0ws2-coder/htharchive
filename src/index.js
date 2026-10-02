@@ -1,3 +1,12 @@
+class AuthScriptInjector {
+  element(element) {
+    element.prepend(
+      '<script src="/auth.js"></script>',
+      { html: true }
+    );
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -47,79 +56,93 @@ export default {
 
       return Response.json(work, { status: 201 });
     }
+
     // 작품 정보 수정하기
-if (url.pathname.startsWith("/api/works/") && request.method === "PATCH") {
-  const id = url.pathname.split("/").pop();
-  const body = await request.json();
+    if (url.pathname.startsWith("/api/works/") && request.method === "PATCH") {
+      const id = url.pathname.split("/").pop();
+      const body = await request.json();
 
-  const title = String(body.title ?? "").trim();
+      const title = String(body.title ?? "").trim();
 
-  if (!title) {
-    return Response.json(
-      { error: "작품명을 입력해 주세요." },
-      { status: 400 }
-    );
-  }
+      if (!title) {
+        return Response.json(
+          { error: "작품명을 입력해 주세요." },
+          { status: 400 }
+        );
+      }
 
-  const work = await env.DB
-    .prepare(`
-      UPDATE works
-      SET
-        title = ?,
-        season_start = ?,
-        season_end = ?,
-        icon = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ? AND user_id = ?
-      RETURNING *
-    `)
-    .bind(
-      title,
-      body.season_start || null,
-      body.season_end || null,
-      body.icon || null,
-      id,
-      "local-dev"
-    )
-    .first();
+      const work = await env.DB
+        .prepare(`
+          UPDATE works
+          SET
+            title = ?,
+            season_start = ?,
+            season_end = ?,
+            icon = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND user_id = ?
+          RETURNING *
+        `)
+        .bind(
+          title,
+          body.season_start || null,
+          body.season_end || null,
+          body.icon || null,
+          id,
+          "local-dev"
+        )
+        .first();
 
-  if (!work) {
-    return Response.json(
-      { error: "작품을 찾을 수 없어요." },
-      { status: 404 }
-    );
-  }
+      if (!work) {
+        return Response.json(
+          { error: "작품을 찾을 수 없어요." },
+          { status: 404 }
+        );
+      }
 
-  return Response.json(work);
-}
-// 작품 삭제하기
-if (url.pathname.startsWith("/api/works/") && request.method === "DELETE") {
-  const id = url.pathname.split("/").pop();
+      return Response.json(work);
+    }
 
-  if (!id) {
-    return Response.json(
-      { error: "삭제할 작품을 찾을 수 없어요." },
-      { status: 400 }
-    );
-  }
+    // 작품 삭제하기
+    if (url.pathname.startsWith("/api/works/") && request.method === "DELETE") {
+      const id = url.pathname.split("/").pop();
 
-  const result = await env.DB
-    .prepare(`
-      DELETE FROM works
-      WHERE id = ? AND user_id = ?
-    `)
-    .bind(id, "local-dev")
-    .run();
+      if (!id) {
+        return Response.json(
+          { error: "삭제할 작품을 찾을 수 없어요." },
+          { status: 400 }
+        );
+      }
 
-  if (!result.meta.changes) {
-    return Response.json(
-      { error: "작품을 찾을 수 없어요." },
-      { status: 404 }
-    );
-  }
+      const result = await env.DB
+        .prepare(`
+          DELETE FROM works
+          WHERE id = ? AND user_id = ?
+        `)
+        .bind(id, "local-dev")
+        .run();
 
-  return Response.json({ ok: true });
-}
-    return env.ASSETS.fetch(request);
+      if (!result.meta.changes) {
+        return Response.json(
+          { error: "작품을 찾을 수 없어요." },
+          { status: 404 }
+        );
+      }
+
+      return Response.json({ ok: true });
+    }
+
+    const assetResponse = await env.ASSETS.fetch(request);
+    const contentType = assetResponse.headers.get("content-type") || "";
+
+    // HTML에만 auth.js를 자동 삽입합니다.
+    // 그래서 거대한 index.html을 직접 수정할 필요가 없습니다.
+    if (contentType.includes("text/html")) {
+      return new HTMLRewriter()
+        .on("head", new AuthScriptInjector())
+        .transform(assetResponse);
+    }
+
+    return assetResponse;
   },
 };
