@@ -47,7 +47,34 @@ export default {
 
       return Response.json(work, { status: 201 });
     }
+// 작품 삭제하기
+if (url.pathname.startsWith("/api/works/") && request.method === "DELETE") {
+  const id = url.pathname.split("/").pop();
 
+  if (!id) {
+    return Response.json(
+      { error: "삭제할 작품을 찾을 수 없어요." },
+      { status: 400 }
+    );
+  }
+
+  const result = await env.DB
+    .prepare(`
+      DELETE FROM works
+      WHERE id = ? AND user_id = ?
+    `)
+    .bind(id, "local-dev")
+    .run();
+
+  if (!result.meta.changes) {
+    return Response.json(
+      { error: "작품을 찾을 수 없어요." },
+      { status: 404 }
+    );
+  }
+
+  return Response.json({ ok: true });
+}
     return env.ASSETS.fetch(request);
   },
 };
