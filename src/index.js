@@ -47,6 +47,51 @@ export default {
 
       return Response.json(work, { status: 201 });
     }
+    // 작품 정보 수정하기
+if (url.pathname.startsWith("/api/works/") && request.method === "PATCH") {
+  const id = url.pathname.split("/").pop();
+  const body = await request.json();
+
+  const title = String(body.title ?? "").trim();
+
+  if (!title) {
+    return Response.json(
+      { error: "작품명을 입력해 주세요." },
+      { status: 400 }
+    );
+  }
+
+  const work = await env.DB
+    .prepare(`
+      UPDATE works
+      SET
+        title = ?,
+        season_start = ?,
+        season_end = ?,
+        icon = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND user_id = ?
+      RETURNING *
+    `)
+    .bind(
+      title,
+      body.season_start || null,
+      body.season_end || null,
+      body.icon || null,
+      id,
+      "local-dev"
+    )
+    .first();
+
+  if (!work) {
+    return Response.json(
+      { error: "작품을 찾을 수 없어요." },
+      { status: 404 }
+    );
+  }
+
+  return Response.json(work);
+}
 // 작품 삭제하기
 if (url.pathname.startsWith("/api/works/") && request.method === "DELETE") {
   const id = url.pathname.split("/").pop();
