@@ -39,6 +39,181 @@
   `;
   document.head.appendChild(patchStyle);
 
+  /*
+   * D1 archive sync
+   * 작품(works)은 기존 API를 그대로 사용하고,
+   * 계정/작품 캐스트/관극/타래/포스트/이미지 URL은 /api/archive로 동기화합니다.
+   */
+  const localPersist = persist;
+  let archiveReady = false;
+  let archiveSyncQueue = Promise.resolve();
+  let archiveSyncErrorShown = false;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function cleanArchivePayload() {
+    const workCast = state.works
+      .filter(work => work.id !== 'etc')
+      .flatMap(work =>
+        (Array.isArray(work.castPool) ? work.castPool : [])
+          .filter(member => (member.actor || '').trim())
+          .map((member, index) => ({
+            workId: String(work.id),
+            actor: member.actor || '',
+            role: member.role || '',
+            sortOrder: index
+          }))
+      );
+
+    const accounts = (state.accounts || []).map((account, index) => ({
+      id: account.id || `account-${index}`,
+      handle: account.handle || '',
+      label: account.label || '',
+      isDefault: Boolean(account.isDefault)
+    }));
+
+    const viewings = (state.viewings || []).map(viewing => ({
+      id: viewing.id,
+      workId: viewing.workId || 'etc',
+      date: viewing.date || '',
+      session: viewing.session || '',
+      theater: viewing.theater || '',
+      cast: Array.isArray(viewing.cast)
+        ? viewing.cast.map(member => ({
+            actor: member.actor || '',
+            role: member.role || ''
+          }))
+        : []
+    }));
+
+    const threads = (state.threads || []).map(thread => ({
+      id: thread.id,
+      workId: thread.workId || 'etc',
+      viewingIds: Array.isArray(thread.viewingIds) ? thread.viewingIds : [],
+      title: thread.title || '',
+      author: thread.author || '',
+      createdAt: thread.createdAt || new Date().toISOString(),
+      source: thread.source || 'manual',
+      urls: Array.isArray(thread.urls) ? thread.urls : [],
+      posts: (Array.isArray(thread.posts) ? thread.posts : []).map(post => ({
+        owner: Boolean(post.owner),
+        author: post.author || '',
+        text: post.text || '',
+        context: Boolean(post.context),
+        quote: post.quote
+          ? {
+              author: post.quote.author || '',
+              text: post.quote.text || ''
+            }
+          : null,
+        media: (Array.isArray(post.media) ? post.media : [])
+          .filter(item => /^https?:\/\//i.test(item?.src || ''))
+          .slice(0, 4)
+          .map((item, index) => ({
+            type: 'link',
+            src: item.src,
+            alt: item.alt || '',
+            source: 'url',
+            order: index
+          }))
+      }))
+    }));
+
+    return { accounts, workCast, viewings, threads };
+  }
+
+  async function pushArchiveSnapshot(payload) {
+    const response = await fetch('/api/archive', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      let message = '기록을 서버에 저장하지 못했어요.';
+      try {
+        const data = await response.json();
+        if (data?.error) message = data.error;
+      } catch {}
+      throw new Error(message);
+    }
+  }
+
+  function queueArchiveSync() {
+    if (!archiveReady) return;
+
+    const payload = JSON.parse(JSON.stringify(cleanArchivePayload()));
+
+    archiveSyncQueue = archiveSyncQueue
+      .catch(() => {})
+      .then(() => pushArchiveSnapshot(payload))
+      .then(() => {
+        archiveSyncErrorShown = false;
+      })
+      .catch(error => {
+        console.error('HTH D1 sync failed:', error);
+        if (!archiveSyncErrorShown) {
+          archiveSyncErrorShown = true;
+          toast('서버 저장에 실패했어요. 인터넷 연결 후 다시 저장해 주세요.');
+        }
+      });
+  }
+
+  persist = function() {
+    localPersist();
+    queueArchiveSync();
+  };
+
+  async function hydrateArchiveFromD1() {
+    try {
+      // auth.js가 로그인 확인을 끝내고, 기존 boot()의 works 로딩도 끝날 시간을 줍니다.
+      while (document.documentElement.classList.contains('hth-auth-pending')) {
+        await sleep(60);
+      }
+      await sleep(180);
+
+      // 항상 최신 작품 목록을 먼저 받은 뒤 castPool을 얹습니다.
+      await loadWorksFromDB();
+
+      const response = await fetch('/api/archive');
+      if (!response.ok) {
+        throw new Error('서버 기록을 불러오지 못했어요.');
+      }
+
+      const archive = await response.json();
+
+      state.accounts = Array.isArray(archive.accounts) ? archive.accounts : [];
+      state.viewings = Array.isArray(archive.viewings) ? archive.viewings : [];
+      state.threads = Array.isArray(archive.threads) ? archive.threads : [];
+
+      const castByWork = new Map();
+      for (const item of Array.isArray(archive.workCast) ? archive.workCast : []) {
+        const key = String(item.workId);
+        if (!castByWork.has(key)) castByWork.set(key, []);
+        castByWork.get(key).push({
+          actor: item.actor || '',
+          role: item.role || ''
+        });
+      }
+
+      state.works = state.works.map(work => ({
+        ...work,
+        castPool: work.id === 'etc'
+          ? []
+          : (castByWork.get(String(work.id)) || [])
+      }));
+
+      archiveReady = true;
+      localPersist();
+      render();
+    } catch (error) {
+      console.error('HTH D1 hydrate failed:', error);
+      toast('서버 기록을 불러오지 못했어요.');
+    }
+  }
+
   function parseMediaUrls(raw = '') {
     const lines = raw
       .split(/\n+/)
@@ -67,7 +242,7 @@
     }));
   }
 
-  // 이미지는 직접 렌더링하지 않고 URL 링크만 표시합니다.
+  // 이미지는 HTH 안에서 직접 로딩하지 않고 링크만 표시합니다.
   mediaGrid = function(media = []) {
     const links = media
       .filter(item => /^https?:\/\//i.test(item?.src || ''))
@@ -92,7 +267,7 @@
     `;
   };
 
-  // 카드에서도 썸네일 이미지를 만들지 않습니다.
+  // 카드 썸네일도 만들지 않습니다.
   threadCard = function(t) {
     const w = workBy(t.workId);
     const first = t.posts.find(p => p.owner)?.text || '';
@@ -119,7 +294,7 @@
     `;
   };
 
-  // 직접 추가에서는 파일 업로드 대신 이미지 URL만 저장합니다.
+  // 직접 추가: 이미지 파일 업로드 없이 URL만 저장합니다.
   openManual = function() {
     modalLayer.innerHTML = `
       <div class="modal">
@@ -279,7 +454,8 @@
             owner: false,
             author: $('.context-author', box)?.value.trim() || '@context',
             text: cText,
-            context: true
+            context: true,
+            media: []
           });
         }
       }
@@ -312,12 +488,12 @@
       state.threads.unshift(t);
       persist();
       closeModal();
-      toast('텍스트와 이미지 링크를 저장했어요.');
+      toast('기록을 저장했어요.');
       routeTo('thread', { id: t.id });
     });
   };
 
-  // X 가져오기도 향후 "첨부 이미지 파일 저장"이 아니라 "원본 URL 기록" 방향으로 안내합니다.
+  // X API가 붙기 전 안내. 이후에도 첨부 이미지는 URL만 기록합니다.
   openImportPreview = function() {
     const rawUrls = $('#importUrls')?.value.trim() || '';
 
@@ -370,12 +546,5 @@
     $('#goManual')?.addEventListener('click', openManual);
   };
 
-  // 이미 로그인된 상태에서 기존 화면이 먼저 그려졌어도 패치된 카드로 한 번 다시 렌더링합니다.
-  queueMicrotask(() => {
-    try {
-      render();
-    } catch (error) {
-      console.debug('HTH app patch render skipped:', error);
-    }
-  });
+  hydrateArchiveFromD1();
 })();
