@@ -21,8 +21,8 @@
     "d1_databases": [
       {
         "binding": "DB",
-        "database_name": "hth-archive-db",
-        "database_id": "f9e0af3b-29a4-49a6-96a8-0dd8a2236371"
+        "database_name": "hth-archive-db-preview",
+        "database_id": "c56fbf7f-1bbf-44f5-9672-43b66c069503"
       }
     ]
   }
