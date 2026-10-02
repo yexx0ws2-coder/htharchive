@@ -424,7 +424,7 @@
     $('#addManualPost').addEventListener('click', addEditor);
 
   $('#saveManual').addEventListener('click', () => {
-  const editors = $$('.post-editor', '#manualPosts');
+  const editors = $$('#manualPosts .post-editor');
   const posts = [];
 
   for (const box of editors) {
