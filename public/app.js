@@ -345,7 +345,63 @@ function openSettings(){
 function openWorkCreator(){
   modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>새 작품 추가</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><div class="form-grid"><div class="field"><label>작품 제목</label><input id="newWorkTitle" placeholder="예: 작품 제목"></div><div class="field"><label>시즌 기간 (선택)</label><div class="date-pair"><input type="date" id="newSeasonStart"><span>—</span><input type="date" id="newSeasonEnd"></div><span class="field-hint">같은 작품의 다음 시즌은 별도 작품 카드로 추가해두면 이전 시즌 기록과 섞이지 않아요.</span></div><div class="field"><label>대표 아이콘</label><input id="newWorkIcon" maxlength="3" value="✦"></div><div class="footer-actions"><button class="btn" data-close>취소</button><button class="btn primary" id="saveNewWork">추가</button></div></div></div></div>`;
   bindModalClose();setTimeout(()=>$('#newWorkTitle')?.focus(),50);
-  $('#saveNewWork').addEventListener('click',()=>{const title=$('#newWorkTitle').value.trim();if(!title){toast('작품 제목을 입력해 주세요.');return}const tones=['lavender','peach','mint','blue'];const w={id:'w'+Date.now(),title,tone:tones[state.works.length%tones.length],icon:$('#newWorkIcon').value.trim()||'✦',seasonStart:$('#newSeasonStart').value,seasonEnd:$('#newSeasonEnd').value,castPool:[]};const etc=state.works.find(x=>x.id==='etc');state.works=state.works.filter(x=>x.id!=='etc');state.works.push(w);if(etc)state.works.push(etc);persist();closeModal();toast(`${title} 작품을 추가했어요.`);routeTo('work',{id:w.id,tab:'all'});});
+ $('#saveNewWork').addEventListener('click', async () => {
+  const title = $('#newWorkTitle').value.trim();
+
+  if (!title) {
+    toast('작품 제목을 입력해 주세요.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/works', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        season_start: $('#newSeasonStart').value || null,
+        season_end: $('#newSeasonEnd').value || null,
+        icon: $('#newWorkIcon').value.trim() || '✦'
+      })
+    });
+
+    const saved = await response.json();
+
+    if (!response.ok) {
+      throw new Error(saved.error || '작품 저장에 실패했어요.');
+    }
+
+    const tones = ['lavender', 'peach', 'mint', 'blue'];
+
+    const w = {
+      id: String(saved.id),
+      title: saved.title,
+      tone: tones[state.works.length % tones.length],
+      icon: saved.icon || '✦',
+      seasonStart: saved.season_start || '',
+      seasonEnd: saved.season_end || '',
+      castPool: []
+    };
+
+    const etc = state.works.find(x => x.id === 'etc');
+
+    state.works = state.works.filter(x => x.id !== 'etc');
+    state.works.push(w);
+
+    if (etc) state.works.push(etc);
+
+    persist();
+    closeModal();
+    toast(`${title} 작품을 추가했어요.`);
+    routeTo('work', { id: w.id, tab: 'all' });
+
+  } catch (error) {
+    console.error(error);
+    toast('작품 저장 중 오류가 발생했어요.');
+  }
+});
 }
 
 function openWorkEditor(workId){
