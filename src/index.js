@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // D1 작품 목록 테스트 API
+    // 작품 목록 읽기
     if (url.pathname === "/api/works" && request.method === "GET") {
       const { results } = await env.DB
         .prepare("SELECT * FROM works ORDER BY created_at DESC")
@@ -11,7 +11,43 @@ export default {
       return Response.json(results);
     }
 
-    // 그 외 주소는 기존 HTH 화면 그대로 표시
+    // 작품 새로 저장하기
+    if (url.pathname === "/api/works" && request.method === "POST") {
+      const body = await request.json();
+
+      const title = String(body.title ?? "").trim();
+
+      if (!title) {
+        return Response.json(
+          { error: "작품명을 입력해 주세요." },
+          { status: 400 }
+        );
+      }
+
+      const work = await env.DB
+        .prepare(`
+          INSERT INTO works (
+            user_id,
+            title,
+            season_start,
+            season_end,
+            icon
+          )
+          VALUES (?, ?, ?, ?, ?)
+          RETURNING *
+        `)
+        .bind(
+          "local-dev",
+          title,
+          body.season_start || null,
+          body.season_end || null,
+          body.icon || null
+        )
+        .first();
+
+      return Response.json(work, { status: 201 });
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
