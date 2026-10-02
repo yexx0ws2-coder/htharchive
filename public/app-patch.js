@@ -161,10 +161,15 @@
       });
   }
 
-  persist = function() {
+ persist = function() {
+  try {
     localPersist();
-    queueArchiveSync();
-  };
+  } catch (error) {
+    console.error('HTH local cache save failed:', error);
+  }
+
+  queueArchiveSync();
+};
 
   async function hydrateArchiveFromD1() {
     try {
