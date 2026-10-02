@@ -2,9 +2,27 @@
   "name": "htharchive",
   "main": "./src/index.js",
   "compatibility_date": "2026-09-30",
+
   "assets": {
     "directory": "./public/",
     "binding": "ASSETS"
   },
-  "previews": {}
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hth-archive-db",
+      "database_id": "f9e0af3b-29a4-49a6-96a8-0dd8a2236371"
+    }
+  ],
+
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "hth-archive-db",
+        "database_id": "f9e0af3b-29a4-49a6-96a8-0dd8a2236371"
+      }
+    ]
+  }
 }
