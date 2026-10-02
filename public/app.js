@@ -455,9 +455,60 @@ function openWorkEditor(workId){
   bindModalClose();
   function drawRows(){const host=$('#workCastRows');host.innerHTML=rows.map((c,i)=>`<div class="work-cast-row"><input data-cast-actor="${i}" value="${esc(c.actor||'')}" placeholder="배우 이름"><input data-cast-role="${i}" value="${esc(c.role||'')}" placeholder="배역 (선택)"><button class="mini-btn" data-cast-remove="${i}" type="button">×</button></div>`).join('')||'<div class="field-hint">아직 등록된 배우가 없어요. 필요할 때만 추가해도 됩니다.</div>';$$('[data-cast-actor]',host).forEach(el=>el.addEventListener('input',()=>rows[Number(el.dataset.castActor)].actor=el.value));$$('[data-cast-role]',host).forEach(el=>el.addEventListener('input',()=>rows[Number(el.dataset.castRole)].role=el.value));$$('[data-cast-remove]',host).forEach(el=>el.addEventListener('click',()=>{rows.splice(Number(el.dataset.castRemove),1);drawRows()}));}
   drawRows();$('#addWorkCast').addEventListener('click',()=>{rows.push({actor:'',role:''});drawRows();setTimeout(()=>$$('[data-cast-actor]','#workCastRows').at(-1)?.focus(),0)});
-  $('#saveWorkEdit').addEventListener('click',()=>{w.title=$('#editWorkTitle').value.trim()||w.title;w.seasonStart=$('#editSeasonStart').value;w.seasonEnd=$('#editSeasonEnd').value;w.icon=$('#editWorkIcon').value.trim()||'✦';w.castPool=rows.map(c=>({actor:c.actor.trim(),role:c.role.trim()})).filter(c=>c.actor);persist();closeModal();toast('작품 정보를 수정했어요.');if(route==='work')renderWork(w.id);else renderLibrary();});
-  
-$('#deleteWork').addEventListener('click', async () => {
+ $('#saveWorkEdit').addEventListener('click', async () => {
+  const title = $('#editWorkTitle').value.trim();
+
+  if (!title) {
+    toast('작품 제목을 입력해 주세요.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/works/${w.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title,
+        season_start: $('#editSeasonStart').value || null,
+        season_end: $('#editSeasonEnd').value || null,
+        icon: $('#editWorkIcon').value.trim() || '✦'
+      })
+    });
+
+    const saved = await response.json();
+
+    if (!response.ok) {
+      throw new Error(saved.error || '작품 수정에 실패했어요.');
+    }
+
+    w.title = saved.title;
+    w.seasonStart = saved.season_start || '';
+    w.seasonEnd = saved.season_end || '';
+    w.icon = saved.icon || '✦';
+
+    // 배우/배역은 아직 로컬 저장
+    w.castPool = rows
+      .map(c => ({
+        actor: c.actor.trim(),
+        role: c.role.trim()
+      }))
+      .filter(c => c.actor);
+
+    persist();
+    closeModal();
+    toast('작품 정보를 수정했어요.');
+
+    if (route === 'work') renderWork(w.id);
+    else renderLibrary();
+
+  } catch (error) {
+    console.error(error);
+    toast('작품 수정 중 오류가 발생했어요.');
+  }
+});
+  $('#deleteWork').addEventListener('click', async () => {
   const ok = confirm(
     `${w.title} 작품을 삭제할까요?\n연결된 관극과 타래는 미분류로 이동합니다.`
   );
