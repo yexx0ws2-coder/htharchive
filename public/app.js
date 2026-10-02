@@ -30,6 +30,51 @@ const view = $('#view');
 const modalLayer = $('#modalLayer');
 
 function persist(){ localStorage.setItem('hth-state-v6-clean', JSON.stringify(state)); }
+async function loadWorksFromDB() {
+  try {
+    const response = await fetch('/api/works');
+
+    if (!response.ok) {
+      throw new Error('작품 목록을 불러오지 못했어요.');
+    }
+
+    const rows = await response.json();
+    const tones = ['lavender', 'peach', 'mint', 'blue'];
+
+    const works = rows.map((row, i) => ({
+      id: String(row.id),
+      title: row.title,
+      tone: tones[i % tones.length],
+      icon: row.icon || '✦',
+      seasonStart: row.season_start || '',
+      seasonEnd: row.season_end || '',
+      castPool: []
+    }));
+
+    const etc =
+      state.works.find(x => x.id === 'etc') ||
+      {
+        id: 'etc',
+        title: '미분류',
+        tone: 'blue',
+        icon: '⌁',
+        seasonStart: '',
+        seasonEnd: '',
+        castPool: []
+      };
+
+    state.works = [...works, etc];
+    persist();
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function boot() {
+  await loadWorksFromDB();
+  render();
+}
 function workBy(id){ return state.works.find(w=>w.id===id); }
 function viewingBy(id){ return state.viewings.find(v=>v.id===id); }
 function fmtDate(d){ const x=new Date(d); return `${x.getMonth()+1}.${x.getDate()}`; }
@@ -426,4 +471,4 @@ $$('[data-action="open-settings"]').forEach(el=>el.addEventListener('click',open
 $('#sideSearchInput').addEventListener('keydown',e=>{if(e.key==='Enter'){searchState.q=e.target.value.trim();routeTo('search')}});
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();routeTo('search');setTimeout(()=>$('#searchInput')?.focus(),50)}if(e.key==='Escape')closeModal();});
 const theme=localStorage.getItem('hth-theme');if(theme)document.body.dataset.theme=theme;
-render();
+boot();
