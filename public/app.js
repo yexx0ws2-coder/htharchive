@@ -451,13 +451,52 @@ function openWorkCreator(){
 
 function openWorkEditor(workId){
   const w=workBy(workId);if(!w)return;let rows=(w.castPool?.length?w.castPool:inferredWorkCast(workId)).map(c=>({...c}));
-  modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>작품 정보 수정</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><div class="form-grid"><div class="field"><label>작품 제목</label><input id="editWorkTitle" value="${esc(w.title)}"></div><div class="field"><label>시즌 기간 (선택)</label><div class="date-pair"><input type="date" id="editSeasonStart" value="${esc(w.seasonStart||'')}"><span>—</span><input type="date" id="editSeasonEnd" value="${esc(w.seasonEnd||'')}"></div><span class="field-hint">다음 시즌이 와도 같은 작품명끼리 헷갈리지 않도록 첫공일–막공일을 기록할 수 있어요.</span></div><div class="field"><label>대표 아이콘</label><input id="editWorkIcon" maxlength="3" value="${esc(w.icon||'✦')}" placeholder="✦"><span class="field-hint">이모지나 한두 글자 기호를 사용할 수 있어요.</span></div><div class="field"><label>배우 · 배역</label><div id="workCastRows" class="work-cast-editor"></div><button class="btn" type="button" id="addWorkCast">＋ 배우 추가</button></div><div class="footer-actions"><button class="btn" data-close>취소</button><button class="btn primary" id="saveWorkEdit">저장</button></div></div></div></div>`;
+  modalLayer.innerHTML=`<div class="modal"><div class="modal-head"><h2>작품 정보 수정</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><div class="form-grid"><div class="field"><label>작품 제목</label><input id="editWorkTitle" value="${esc(w.title)}"></div><div class="field"><label>시즌 기간 (선택)</label><div class="date-pair"><input type="date" id="editSeasonStart" value="${esc(w.seasonStart||'')}"><span>—</span><input type="date" id="editSeasonEnd" value="${esc(w.seasonEnd||'')}"></div><span class="field-hint">다음 시즌이 와도 같은 작품명끼리 헷갈리지 않도록 첫공일–막공일을 기록할 수 있어요.</span></div><div class="field"><label>대표 아이콘</label><input id="editWorkIcon" maxlength="3" value="${esc(w.icon||'✦')}" placeholder="✦"><span class="field-hint">이모지나 한두 글자 기호를 사용할 수 있어요.</span></div><div class="field"><label>배우 · 배역</label><div id="workCastRows" class="work-cast-editor"></div><button class="btn" type="button" id="addWorkCast">＋ 배우 추가</button></div><div class="footer-actions"><button class="btn" id="deleteWork">작품 삭제</button><button class="btn" data-close>취소</button><button class="btn primary" id="saveWorkEdit">저장</button></div></div></div></div>`;
   bindModalClose();
   function drawRows(){const host=$('#workCastRows');host.innerHTML=rows.map((c,i)=>`<div class="work-cast-row"><input data-cast-actor="${i}" value="${esc(c.actor||'')}" placeholder="배우 이름"><input data-cast-role="${i}" value="${esc(c.role||'')}" placeholder="배역 (선택)"><button class="mini-btn" data-cast-remove="${i}" type="button">×</button></div>`).join('')||'<div class="field-hint">아직 등록된 배우가 없어요. 필요할 때만 추가해도 됩니다.</div>';$$('[data-cast-actor]',host).forEach(el=>el.addEventListener('input',()=>rows[Number(el.dataset.castActor)].actor=el.value));$$('[data-cast-role]',host).forEach(el=>el.addEventListener('input',()=>rows[Number(el.dataset.castRole)].role=el.value));$$('[data-cast-remove]',host).forEach(el=>el.addEventListener('click',()=>{rows.splice(Number(el.dataset.castRemove),1);drawRows()}));}
   drawRows();$('#addWorkCast').addEventListener('click',()=>{rows.push({actor:'',role:''});drawRows();setTimeout(()=>$$('[data-cast-actor]','#workCastRows').at(-1)?.focus(),0)});
   $('#saveWorkEdit').addEventListener('click',()=>{w.title=$('#editWorkTitle').value.trim()||w.title;w.seasonStart=$('#editSeasonStart').value;w.seasonEnd=$('#editSeasonEnd').value;w.icon=$('#editWorkIcon').value.trim()||'✦';w.castPool=rows.map(c=>({actor:c.actor.trim(),role:c.role.trim()})).filter(c=>c.actor);persist();closeModal();toast('작품 정보를 수정했어요.');if(route==='work')renderWork(w.id);else renderLibrary();});
-}
+  
+$('#deleteWork').addEventListener('click', async () => {
+  const ok = confirm(
+    `${w.title} 작품을 삭제할까요?\n연결된 관극과 타래는 미분류로 이동합니다.`
+  );
 
+  if (!ok) return;
+
+  try {
+    const response = await fetch(`/api/works/${w.id}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || '작품 삭제에 실패했어요.');
+    }
+
+    // 현재 브라우저에 저장된 연결 기록은 보존하고 미분류로 이동
+    state.viewings.forEach(v => {
+      if (v.workId === w.id) v.workId = 'etc';
+    });
+
+    state.threads.forEach(t => {
+      if (t.workId === w.id) t.workId = 'etc';
+    });
+
+    state.works = state.works.filter(x => x.id !== w.id);
+
+    persist();
+    closeModal();
+    toast(`${w.title} 작품을 삭제했어요.`);
+    routeTo('library');
+
+  } catch (error) {
+    console.error(error);
+    toast('작품 삭제 중 오류가 발생했어요.');
+  }
+});
+}
 function openImageViewer(src,alt='첨부 이미지'){modalLayer.innerHTML=`<div class="image-viewer"><button class="close-btn image-viewer-close" data-close>×</button><img src="${esc(src)}" alt="${esc(alt)}"><div class="image-viewer-caption">${esc(alt)}</div></div>`;bindModalClose();}
 
 function editTitle(id){const t=state.threads.find(x=>x.id===id);modalLayer.innerHTML=`<div class="sheet"><div class="modal-head"><h2>타래 제목 수정</h2><button class="close-btn" data-close>×</button></div><div class="modal-body"><div class="field"><label>제목</label><input id="titleEditInput" value="${esc(t.title)}"><span class="field-hint">제목은 검색 대상이지만 원문은 그대로 유지돼요.</span></div><div class="footer-actions"><button class="btn" data-close>취소</button><button class="btn primary" id="saveTitle">저장</button></div></div></div>`;bindModalClose();setTimeout(()=>$('#titleEditInput').focus(),50);$('#saveTitle').addEventListener('click',()=>{t.title=$('#titleEditInput').value.trim()||t.title;persist();closeModal();renderThread(id);toast('타래 제목을 수정했어요.');});}
