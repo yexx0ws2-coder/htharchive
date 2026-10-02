@@ -418,59 +418,133 @@
     addEditor();
     $('#addManualPost').addEventListener('click', addEditor);
 
-   $('#saveManual').addEventListener('click', () => {
-  // X API가 붙기 전 안내. 이후에도 첨부 이미지는 URL만 기록합니다.
-  openImportPreview = function() {
-    const rawUrls = $('#importUrls')?.value.trim() || '';
+  $('#saveManual').addEventListener('click', () => {
+  const editors = $$('.post-editor', '#manualPosts');
+  const posts = [];
 
-    if (!rawUrls) {
-      toast('X 타래 URL을 입력해 주세요.');
-      return;
-    }
+  for (const box of editors) {
+    const text = $('.manual-text', box).value.trim();
+    if (!text) continue;
 
-    const urls = rawUrls
-      .split(/\n+/)
-      .map(x => x.trim())
-      .filter(Boolean);
-
-    const valid = urls.every(u =>
-      /(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/[^\/\s]+\/status\/\d+/i.test(u)
+    const media = parseMediaUrls(
+      $('.manual-media-urls', box)?.value || ''
     );
 
-    if (!valid) {
-      toast('올바른 X 게시물 URL인지 확인해 주세요.');
-      return;
+    if (media === null) return;
+
+    const qText = $('.quote-text', box)?.value.trim();
+    const cText = $('.context-text', box)?.value.trim();
+
+    posts.push({
+      owner: true,
+      text,
+      media,
+      ...(qText
+        ? {
+            quote: {
+              author: $('.quote-author', box)?.value.trim() || '',
+              text: qText
+            }
+          }
+        : {})
+    });
+
+    if (cText) {
+      posts.push({
+        owner: false,
+        author: $('.context-author', box)?.value.trim() || '@context',
+        text: cText,
+        context: true,
+        media: []
+      });
     }
+  }
 
-    modalLayer.innerHTML = `
-      <div class="modal">
-        <div class="modal-head">
-          <h2>링크 가져오기</h2>
-          <button class="close-btn" data-close>×</button>
-        </div>
+  if (!posts.some(p => p.owner)) {
+    toast('포스트를 한 개 이상 입력해 주세요.');
+    return;
+  }
 
-        <div class="modal-body">
-          <div class="setup-notice">
-            <span class="setup-icon">↗</span>
-            <h3>X API 연결 전 단계예요.</h3>
-            <p>
-              X 개발자 앱과 OAuth를 연결하면 실제 원문을 가져오고,
-              첨부 이미지는 파일로 저장하거나 화면에 직접 띄우지 않고
-              원본 이미지 URL만 기록하게 됩니다.
-            </p>
+  const firstOwner = posts.find(p => p.owner);
+  const title =
+    $('#manualTitle').value.trim() ||
+    firstOwner.text.slice(0, 34);
 
-            <div class="footer-actions">
-              <button class="btn" data-close>닫기</button>
-              <button class="btn primary" id="goManual">직접 추가하기</button>
-            </div>
+  const t = {
+    id: 't' + Date.now(),
+    workId: $('#manualWork').value,
+    viewingIds: [],
+    title,
+    author:
+      cleanHandle($('#manualAuthor').value) ||
+      defaultAccount()?.handle ||
+      '',
+    createdAt: new Date().toISOString(),
+    source: 'manual',
+    urls: [],
+    posts
+  };
+
+  state.threads.unshift(t);
+  persist();
+  closeModal();
+  toast('기록을 저장했어요.');
+  routeTo('thread', { id: t.id });
+});
+};
+
+// X API가 붙기 전 안내. 이후에도 첨부 이미지는 URL만 기록합니다.
+openImportPreview = function() {
+  const rawUrls = $('#importUrls')?.value.trim() || '';
+
+  if (!rawUrls) {
+    toast('X 타래 URL을 입력해 주세요.');
+    return;
+  }
+
+  const urls = rawUrls
+    .split(/\n+/)
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  const valid = urls.every(u =>
+    /(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/[^\/\s]+\/status\/\d+/i.test(u)
+  );
+
+  if (!valid) {
+    toast('올바른 X 게시물 URL인지 확인해 주세요.');
+    return;
+  }
+
+  modalLayer.innerHTML = `
+    <div class="modal">
+      <div class="modal-head">
+        <h2>링크 가져오기</h2>
+        <button class="close-btn" data-close>×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="setup-notice">
+          <span class="setup-icon">↗</span>
+          <h3>X API 연결 전 단계예요.</h3>
+          <p>
+            X 개발자 앱과 OAuth를 연결하면 실제 원문을 가져오고,
+            첨부 이미지는 파일로 저장하거나 화면에 직접 띄우지 않고
+            원본 이미지 URL만 기록하게 됩니다.
+          </p>
+
+          <div class="footer-actions">
+            <button class="btn" data-close>닫기</button>
+            <button class="btn primary" id="goManual">직접 추가하기</button>
           </div>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
-    bindModalClose();
-    $('#goManual')?.addEventListener('click', openManual);
-  };
+  bindModalClose();
+  $('#goManual')?.addEventListener('click', openManual);
+};
 
-  hydrateArchiveFromD1();
+hydrateArchiveFromD1();
 })();
