@@ -12,7 +12,9 @@
     .thread-manage-post-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .thread-manage-post .field{margin:0}
     .thread-manage-danger{margin-top:10px;padding-top:18px;border-top:1px solid var(--line,#e8e5ee);display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .thread-manage-danger .btn{color:#a33}
+    .thread-manage-danger > #deleteThread{color:#a33}
+    .thread-manage-danger .footer-actions [data-close]{color:var(--accent-strong)}
+    .thread-manage-danger .footer-actions #saveThreadManager{color:#fff}
     .thread-manage-viewings{display:flex;flex-wrap:wrap;gap:8px}
     .thread-manage-viewings .chip{cursor:pointer}
     .thread-manage-viewings input{margin-right:6px}
