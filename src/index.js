@@ -778,7 +778,7 @@ function addBulkInsert(
   table,
   columns,
   rows,
-  chunkSize = null
+  maxJsonBytes = 900000
 ) {
   if (
     !Array.isArray(columns) ||
@@ -789,69 +789,70 @@ function addBulkInsert(
     return;
   }
 
-  // Cloudflare D1:
-  // 한 SQL 쿼리당 bound parameter 최대 100개.
-  const D1_MAX_BOUND_PARAMS = 100;
+  const selectColumns = columns
+    .map(
+      (_, index) =>
+        `json_extract(value, '$[${index}]')`
+    )
+    .join(", ");
 
-  const maxRowsByParams =
-    Math.floor(
-      D1_MAX_BOUND_PARAMS /
-      columns.length
-    );
+  const sql = `
+    INSERT INTO ${table} (${columns.join(",")})
+    SELECT ${selectColumns}
+    FROM json_each(?)
+  `;
 
-  if (
-    maxRowsByParams < 1
-  ) {
-    throw new Error(
-      `HTH bulk insert: ${table}의 컬럼 수(${columns.length})가 D1 바인딩 한도를 초과했어요.`
-    );
-  }
+  const encoder =
+    new TextEncoder();
 
-  // 호출하는 쪽에서 더 작은 chunkSize를 지정하면 존중하되,
-  // 절대로 D1 한도를 넘지는 않게 함.
-  const safeChunkSize =
-    Math.max(
-      1,
-      Math.min(
-        chunkSize ??
-          maxRowsByParams,
-        maxRowsByParams
-      )
-    );
+  let chunk = [];
+  let chunkBytes = 2;
 
-  for (
-    let i = 0;
-    i < rows.length;
-    i += safeChunkSize
-  ) {
-    const chunk =
-      rows.slice(
-        i,
-        i + safeChunkSize
-      );
-
-    const oneRow =
-      `(${columns
-        .map(
-          () => "?"
-        )
-        .join(",")})`;
-
-    const sql = `
-      INSERT INTO ${table} (${columns.join(",")})
-      VALUES ${chunk.map(() => oneRow).join(",")}
-    `;
+  function flush() {
+    if (!chunk.length) {
+      return;
+    }
 
     statements.push(
       db
-        .prepare(
-          sql
-        )
+        .prepare(sql)
         .bind(
-          ...chunk.flat()
+          JSON.stringify(chunk)
         )
     );
+
+    chunk = [];
+    chunkBytes = 2;
   }
+
+  for (const row of rows) {
+    const rowJson =
+      JSON.stringify(row);
+
+    const rowBytes =
+      encoder.encode(
+        rowJson
+      ).length +
+      (
+        chunk.length
+          ? 1
+          : 0
+      );
+
+    if (
+      chunk.length &&
+      chunkBytes +
+        rowBytes >
+        maxJsonBytes
+    ) {
+      flush();
+    }
+
+    chunk.push(row);
+    chunkBytes += rowBytes;
+  }
+
+  flush();
 }
 async function getArchive(
   env,
