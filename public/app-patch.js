@@ -1,119 +1,886 @@
 (() => {
   const patchStyle = document.createElement('style');
+
   patchStyle.textContent = `
-    .media-link-list{display:grid;gap:8px;margin-top:12px}
-    .media-link{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:11px 13px;border:1px solid var(--line,#e8e5ee);border-radius:12px;background:rgba(255,255,255,.55);color:inherit;text-decoration:none;font-size:13px}
-    .media-link span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .media-link:hover{border-color:var(--accent,#9a8ed2)}
-    .media-url-box textarea{min-height:76px;resize:vertical}
-    .thread-header .thread-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .thread-manage-posts{display:grid;gap:14px}
-    .thread-manage-post{border:1px solid var(--line,#e8e5ee);border-radius:16px;padding:14px;display:grid;gap:12px;background:rgba(255,255,255,.35)}
-    .thread-manage-post-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .thread-manage-post .field{margin:0}
-    .thread-manage-danger{margin-top:10px;padding-top:18px;border-top:1px solid var(--line,#e8e5ee);display:flex;justify-content:space-between;gap:12px;align-items:center}
-    .thread-manage-danger > #deleteThread{color:#a33}
-    .thread-manage-danger .footer-actions [data-close]{color:var(--accent-strong)}
-    .thread-manage-danger .footer-actions #saveThreadManager{color:#fff}
-    .thread-manage-viewings{display:flex;flex-wrap:wrap;gap:8px}
-    .thread-manage-viewings .chip{cursor:pointer}
-    .thread-manage-viewings input{margin-right:6px}
-    .thread-manage-add-row{display:flex;gap:8px;flex-wrap:wrap}
+    .media-link-list{
+      display:grid;
+      gap:8px;
+      margin-top:12px
+    }
 
-    .collector-json{min-height:210px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.6}
-    .collector-note{border:1px solid var(--line,#e8e5ee);border-radius:16px;padding:14px;background:var(--surface-2,#f7f6fa);font-size:12px;line-height:1.65;color:var(--muted,#777)}
-    .collector-note b{color:var(--text,#222)}
-    .collector-preview{display:grid;gap:10px}
-    .collector-post{border:1px solid var(--line,#e8e5ee);border-radius:16px;padding:14px;background:var(--surface,#fff);display:grid;gap:10px}
-    .collector-post[data-mode="context"]{background:color-mix(in srgb,var(--accent-soft,#efecff) 42%,var(--surface,#fff))}
-    .collector-post[data-mode="exclude"]{opacity:.55}
-    .collector-post-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-    .collector-post-meta{display:grid;gap:3px;min-width:0}
-    .collector-post-meta b{font-size:12px}
-    .collector-post-meta small{font-size:10px;color:var(--muted,#777);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .collector-post-body{white-space:pre-wrap;font-size:13px;line-height:1.72}
-    .collector-post-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted,#777);font-size:10px}
-    .collector-mode{border:1px solid var(--line,#e8e5ee);background:var(--surface,#fff);border-radius:10px;padding:7px 9px;font-size:11px}
-    .collector-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .media-link{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-width:0;
+      padding:11px 13px;
+      border:1px solid var(--line,#e8e5ee);
+      border-radius:12px;
+      background:rgba(255,255,255,.55);
+      color:inherit;
+      text-decoration:none;
+      font-size:13px
+    }
+
+    .media-link span:first-child{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
+    }
+
+    .media-link:hover{
+      border-color:var(--accent,#9a8ed2)
+    }
+
+    .media-url-box textarea{
+      min-height:76px;
+      resize:vertical
+    }
+
+    .thread-header .thread-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px
+    }
+
+    .thread-manage-posts{
+      display:grid;
+      gap:14px
+    }
+
+    .thread-manage-post{
+      border:1px solid var(--line,#e8e5ee);
+      border-radius:16px;
+      padding:14px;
+      display:grid;
+      gap:12px;
+      background:rgba(255,255,255,.35)
+    }
+
+    .thread-manage-post-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px
+    }
+
+    .thread-manage-post .field{
+      margin:0
+    }
+
+    .thread-manage-danger{
+      margin-top:10px;
+      padding-top:18px;
+      border-top:1px solid var(--line,#e8e5ee);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center
+    }
+
+    .thread-manage-danger > #deleteThread{
+      color:#a33
+    }
+
+    .thread-manage-danger .footer-actions [data-close]{
+      color:var(--accent-strong)
+    }
+
+    .thread-manage-danger .footer-actions #saveThreadManager{
+      color:#fff
+    }
+
+    .thread-manage-viewings{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px
+    }
+
+    .thread-manage-add-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap
+    }
+
+    /* ─────────────────────────────
+       관극 연결 pill
+    ───────────────────────────── */
+
+    .viewing-choice{
+      position:relative;
+      display:inline-flex !important;
+      align-items:center;
+      gap:8px;
+      min-height:38px;
+      padding:7px 13px 7px 9px !important;
+      border:1px solid var(--line,#e4e1e9) !important;
+      border-radius:999px !important;
+      background:var(--surface,#fff) !important;
+      color:var(--text,#242329);
+      cursor:pointer;
+      font-size:12px;
+      line-height:1.35;
+      transition:
+        border-color .15s ease,
+        background .15s ease,
+        transform .15s ease;
+    }
+
+    .viewing-choice:hover{
+      border-color:var(--accent,#9a8ed2) !important;
+      transform:translateY(-1px)
+    }
+
+    .viewing-choice input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+      width:1px;
+      height:1px;
+      margin:0 !important
+    }
+
+    .viewing-choice::before{
+      content:'+';
+      flex:0 0 22px;
+      width:22px;
+      height:22px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:var(--surface-2,#f1eff5);
+      color:var(--muted,#77727f);
+      font-size:14px;
+      font-weight:700
+    }
+
+    .viewing-choice:has(input:checked){
+      border-color:var(--accent,#9a8ed2) !important;
+      background:var(--accent-soft,#f0edff) !important
+    }
+
+    .viewing-choice:has(input:checked)::before{
+      content:'✓';
+      background:var(--accent,#8f7fea);
+      color:#fff
+    }
+
+    .viewing-choice-main{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:4px
+    }
+
+    .viewing-choice-main b{
+      font-size:12px;
+      font-weight:700
+    }
+
+    .viewing-choice-main span{
+      color:var(--muted,#77727f);
+      font-size:11px
+    }
+
+    /* ─────────────────────────────
+       새 관극 - 캐스트/배역 UI
+    ───────────────────────────── */
+
+    .cast-role-line{
+      display:grid !important;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px;
+      align-items:center;
+      padding:0 !important;
+      border:0 !important;
+      background:transparent !important
+    }
+
+    .cast-role-line .cast-row{
+      display:grid !important;
+      grid-template-columns:minmax(130px,.9fr) minmax(160px,1.1fr);
+      gap:8px;
+      align-items:stretch;
+      min-width:0
+    }
+
+    .cast-role-line .actor-name{
+      min-height:44px;
+      display:flex;
+      align-items:center;
+      padding:0 14px;
+      box-sizing:border-box;
+      border:1px solid var(--line,#e4e1e9);
+      border-radius:13px;
+      background:var(--surface-2,#f4f2f8);
+      color:var(--text,#242329);
+      font-size:13px;
+      font-weight:650;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
+    }
+
+    .cast-role-line .role-input-wrap{
+      position:relative;
+      min-width:0
+    }
+
+    .cast-role-line .role-input-wrap input{
+      width:100% !important;
+      min-height:44px !important;
+      box-sizing:border-box !important;
+      padding:0 42px 0 14px !important;
+      border:1px solid var(--line,#e4e1e9) !important;
+      border-radius:13px !important;
+      background:var(--surface,#fff) !important;
+      color:var(--text,#242329) !important;
+      font:inherit !important;
+      font-size:13px !important;
+      outline:none !important;
+      box-shadow:none !important
+    }
+
+    .cast-role-line .role-input-wrap input:hover{
+      border-color:#cbc5d8 !important
+    }
+
+    .cast-role-line .role-input-wrap input:focus{
+      border-color:var(--accent,#9a8ed2) !important;
+      box-shadow:0 0 0 3px rgba(143,127,234,.10) !important
+    }
+
+    .cast-role-line .auto-role-badge{
+      position:absolute;
+      right:10px;
+      top:50%;
+      transform:translateY(-50%);
+      padding:3px 6px;
+      border-radius:999px;
+      background:var(--accent-soft,#f0edff);
+      color:var(--accent-strong,#6d5be7);
+      font-size:9px;
+      pointer-events:none
+    }
+
+    .cast-role-line .cast-remove{
+      width:42px;
+      min-width:42px;
+      height:42px;
+      margin:0 !important;
+      border-radius:12px !important;
+      color:var(--muted,#8a8591)
+    }
+
+    /* ─────────────────────────────
+       타래 상세 관극 + 캐스트
+    ───────────────────────────── */
+
+    .thread-viewings{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:13px
+    }
+
+    .thread-viewing-chip{
+      display:inline-flex !important;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:5px;
+      max-width:100%;
+      padding:7px 11px !important;
+      border-radius:999px !important;
+      line-height:1.4
+    }
+
+    .thread-viewing-date{
+      font-weight:700
+    }
+
+    .thread-viewing-cast{
+      color:inherit;
+      opacity:.78;
+      font-size:10px
+    }
+
+    /* ─────────────────────────────
+       X 수집기 설치 카드
+    ───────────────────────────── */
+
+    .collector-install-card{
+      position:relative;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:22px;
+      align-items:center;
+      margin:22px 0 30px;
+      padding:22px 24px;
+      border:1px solid var(--line,#e5e2ea);
+      border-radius:22px;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(239,235,255,.82),
+          rgba(255,255,255,.92) 52%,
+          rgba(239,248,244,.72)
+        );
+      overflow:hidden
+    }
+
+    .collector-install-card::after{
+      content:'';
+      position:absolute;
+      width:140px;
+      height:140px;
+      right:-55px;
+      top:-70px;
+      border-radius:50%;
+      background:rgba(158,139,234,.09);
+      pointer-events:none
+    }
+
+    .collector-install-copy{
+      position:relative;
+      z-index:1
+    }
+
+    .collector-install-eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-bottom:6px;
+      color:var(--accent-strong,#6d5be7);
+      font-size:10px;
+      font-weight:800;
+      letter-spacing:.04em;
+      text-transform:uppercase
+    }
+
+    .collector-install-copy h3{
+      margin:0;
+      font-size:17px;
+      line-height:1.35
+    }
+
+    .collector-install-copy p{
+      margin:7px 0 0;
+      max-width:650px;
+      color:var(--muted,#77727f);
+      font-size:12px;
+      line-height:1.65
+    }
+
+    .collector-install-actions{
+      position:relative;
+      z-index:1;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end
+    }
+
+    .collector-bookmarklet{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      min-height:42px;
+      padding:0 15px;
+      border-radius:13px;
+      border:1px solid var(--accent,#9a8ed2);
+      background:var(--accent-soft,#f0edff);
+      color:var(--accent-strong,#6754d8);
+      font-size:12px;
+      font-weight:800;
+      text-decoration:none;
+      cursor:grab;
+      user-select:none
+    }
+
+    .collector-bookmarklet:active{
+      cursor:grabbing
+    }
+
+    .collector-install-card.is-installed{
+      grid-template-columns:minmax(0,1fr) auto;
+      padding:16px 20px;
+      margin-bottom:24px
+    }
+
+    .collector-install-card.is-installed .collector-install-copy p{
+      margin-top:4px
+    }
+
+    .collector-install-steps{
+      display:grid;
+      gap:10px;
+      margin:18px 0
+    }
+
+    .collector-install-step{
+      display:grid;
+      grid-template-columns:28px minmax(0,1fr);
+      gap:10px;
+      align-items:start;
+      padding:12px 13px;
+      border-radius:14px;
+      background:var(--surface-2,#f6f4f9)
+    }
+
+    .collector-install-step > b{
+      width:28px;
+      height:28px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:var(--accent-soft,#f0edff);
+      color:var(--accent-strong,#6754d8);
+      font-size:11px
+    }
+
+    .collector-install-step div{
+      font-size:12px;
+      line-height:1.6
+    }
+
+    .collector-install-step small{
+      display:block;
+      margin-top:2px;
+      color:var(--muted,#77727f);
+      font-size:10px
+    }
+
+    .collector-install-drag{
+      display:flex;
+      justify-content:center;
+      padding:18px 0 6px
+    }
+
+    .collector-install-drag .collector-bookmarklet{
+      min-height:50px;
+      padding:0 22px;
+      border-radius:16px;
+      font-size:14px;
+      box-shadow:0 8px 24px rgba(117,99,207,.10)
+    }
+
+    .collector-security-note{
+      margin-top:14px;
+      padding:12px 14px;
+      border:1px solid var(--line,#e5e2ea);
+      border-radius:14px;
+      color:var(--muted,#77727f);
+      font-size:10px;
+      line-height:1.6
+    }
+
+    /* ─────────────────────────────
+       브라우저 가져오기
+    ───────────────────────────── */
+
+    .collector-json{
+      min-height:210px;
+      resize:vertical;
+      font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+      font-size:12px;
+      line-height:1.6
+    }
+
+    .collector-note{
+      border:1px solid var(--line,#e8e5ee);
+      border-radius:16px;
+      padding:14px;
+      background:var(--surface-2,#f7f6fa);
+      font-size:12px;
+      line-height:1.65;
+      color:var(--muted,#777)
+    }
+
+    .collector-note b{
+      color:var(--text,#222)
+    }
+
+    .collector-preview{
+      display:grid;
+      gap:10px
+    }
+
+    .collector-post{
+      border:1px solid var(--line,#e8e5ee);
+      border-radius:16px;
+      padding:14px;
+      background:var(--surface,#fff);
+      display:grid;
+      gap:10px
+    }
+
+    .collector-post[data-mode="context"]{
+      background:
+        color-mix(
+          in srgb,
+          var(--accent-soft,#efecff) 42%,
+          var(--surface,#fff)
+        )
+    }
+
+    .collector-post[data-mode="exclude"]{
+      opacity:.55
+    }
+
+    .collector-post-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px
+    }
+
+    .collector-post-meta{
+      display:grid;
+      gap:3px;
+      min-width:0
+    }
+
+    .collector-post-meta b{
+      font-size:12px
+    }
+
+    .collector-post-meta small{
+      font-size:10px;
+      color:var(--muted,#777);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap
+    }
+
+    .collector-post-body{
+      white-space:pre-wrap;
+      font-size:13px;
+      line-height:1.72
+    }
+
+    .collector-post-foot{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      color:var(--muted,#777);
+      font-size:10px
+    }
+
+    .collector-mode{
+      border:1px solid var(--line,#e8e5ee);
+      background:var(--surface,#fff);
+      border-radius:10px;
+      padding:7px 9px;
+      font-size:11px
+    }
+
+    .collector-summary{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:12px
+    }
+
+    @media (max-width:720px){
+      .collector-install-card,
+      .collector-install-card.is-installed{
+        grid-template-columns:1fr
+      }
+
+      .collector-install-actions{
+        justify-content:flex-start
+      }
+
+      .cast-role-line .cast-row{
+        grid-template-columns:1fr
+      }
+    }
   `;
-  document.head.appendChild(patchStyle);
 
-  const localPersist = persist;
-  let archiveReady = false;
-  let archiveSyncQueue = Promise.resolve();
-  let archiveSyncErrorShown = false;
+  document.head.appendChild(
+    patchStyle
+  );
+
+  const localPersist =
+    persist;
+
+  let archiveReady =
+    false;
+
+  let archiveSyncQueue =
+    Promise.resolve();
+
+  let archiveSyncErrorShown =
+    false;
+
+  const HTH_COLLECTOR_BOOKMARKLET =
+    `javascript:(()=>{if(window.__HTH_COLLECTOR__){window.__HTH_COLLECTOR__.show();return;}const S={posts:new Map(),seq:0,observer:null,panel:null};function info(a){const t=a.querySelector('time');const l=t?.closest('a[href*="/status/"]');const h=l?.getAttribute('href')||'';const m=h.match(/^\\/([^/]+)\\/status\\/(\\d+)/);if(!m)return null;return{handle:'@'+m[1],id:m[2],url:'https://x.com/'+m[1]+'/status/'+m[2],createdAt:t?.getAttribute('datetime')||''};}function scan(){document.querySelectorAll('article[data-testid="tweet"]').forEach(a=>{const meta=info(a);if(!meta||S.posts.has(meta.id))return;const texts=[...a.querySelectorAll('[data-testid="tweetText"]')];const text=texts[0]?.innerText?.trim()||'';if(!text)return;const media=[...a.querySelectorAll('img[src*="pbs.twimg.com/media/"]')].map(i=>i.src).filter(Boolean).filter((v,i,r)=>r.indexOf(v)===i).slice(0,4);let quote=null;if(texts.length>1){const qt=texts[1]?.innerText?.trim()||'';if(qt)quote={author:'',text:qt};}S.posts.set(meta.id,{...meta,text,media,quote,order:S.seq++});});update();}function update(){if(!S.panel)return;const c=S.panel.querySelector('[data-hth-count]');if(c)c.textContent=S.posts.size+'개 수집됨';}function copy(){const posts=[...S.posts.values()].sort((a,b)=>a.order-b.order).map(({order,...p})=>p);const payload={version:1,pageUrl:location.href,collectedAt:new Date().toISOString(),posts};const text=JSON.stringify(payload);navigator.clipboard?.writeText(text).then(()=>flash('복사 완료! HTH에 붙여넣기')).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();flash('복사 완료! HTH에 붙여넣기');});}function flash(msg){const el=S.panel?.querySelector('[data-hth-msg]');if(!el)return;el.textContent=msg;setTimeout(()=>{if(el)el.textContent='';},2200);}function show(){if(S.panel){S.panel.style.display='block';return;}const p=document.createElement('div');p.id='hth-x-collector';p.style.cssText='position:fixed;right:18px;bottom:18px;z-index:2147483647;width:260px;padding:14px;border-radius:16px;background:#fff;color:#222;border:1px solid #ddd;box-shadow:0 14px 40px rgba(0,0,0,.18);font:13px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>HTH 타래 수집</b><button data-hth-hide style="border:0;background:none;font-size:18px;cursor:pointer">×</button></div><div data-hth-count style="margin-top:8px;font-weight:700">0개 수집됨</div><div style="margin-top:5px;color:#777;font-size:11px">첫 글부터 끝까지 천천히 스크롤하세요.</div><div data-hth-msg style="min-height:18px;margin-top:8px;color:#6d5be7;font-size:11px"></div><div style="display:flex;gap:7px;margin-top:8px"><button data-hth-copy style="flex:1;border:0;border-radius:10px;padding:9px;background:#19191d;color:#fff;font-weight:700;cursor:pointer">JSON 복사</button><button data-hth-clear style="border:1px solid #ddd;border-radius:10px;padding:9px;background:#fff;cursor:pointer">초기화</button></div>';document.body.appendChild(p);S.panel=p;p.querySelector('[data-hth-hide]').onclick=()=>p.style.display='none';p.querySelector('[data-hth-copy]').onclick=copy;p.querySelector('[data-hth-clear]').onclick=()=>{S.posts.clear();S.seq=0;scan();flash('수집 목록 초기화');};update();}S.observer=new MutationObserver(()=>scan());S.observer.observe(document.body,{childList:true,subtree:true});S.show=show;S.scan=scan;S.copy=copy;window.__HTH_COLLECTOR__=S;show();scan();})();`;
 
   function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(
+      resolve =>
+        setTimeout(
+          resolve,
+          ms
+        )
+    );
   }
 
   function cleanArchivePayload() {
-    const workCast = (state.works || [])
-      .filter(work => work.id !== 'etc')
-      .flatMap(work =>
-        (Array.isArray(work.castPool) ? work.castPool : [])
-          .filter(member => (member.actor || '').trim())
-          .map((member, index) => ({
-            workId: String(work.id),
-            actor: member.actor || '',
-            role: member.role || '',
-            sortOrder: index
-          }))
+    const workCast =
+      (
+        state.works ||
+        []
+      )
+        .filter(
+          work =>
+            work.id !==
+            'etc'
+        )
+        .flatMap(
+          work =>
+            (
+              Array.isArray(
+                work.castPool
+              )
+                ? work.castPool
+                : []
+            )
+              .filter(
+                member =>
+                  (
+                    member.actor ||
+                    ''
+                  ).trim()
+              )
+              .map(
+                (
+                  member,
+                  index
+                ) => ({
+                  workId:
+                    String(
+                      work.id
+                    ),
+                  actor:
+                    member.actor ||
+                    '',
+                  role:
+                    member.role ||
+                    '',
+                  sortOrder:
+                    index
+                })
+              )
+        );
+
+    const accounts =
+      (
+        state.accounts ||
+        []
+      ).map(
+        (
+          account,
+          index
+        ) => ({
+          id:
+            account.id ||
+            `account-${index}`,
+          handle:
+            account.handle ||
+            '',
+          label:
+            account.label ||
+            '',
+          isDefault:
+            Boolean(
+              account.isDefault
+            )
+        })
       );
 
-    const accounts = (state.accounts || []).map((account, index) => ({
-      id: account.id || `account-${index}`,
-      handle: account.handle || '',
-      label: account.label || '',
-      isDefault: Boolean(account.isDefault)
-    }));
+    const viewings =
+      (
+        state.viewings ||
+        []
+      ).map(
+        viewing => ({
+          id:
+            viewing.id,
 
-    const viewings = (state.viewings || []).map(viewing => ({
-      id: viewing.id,
-      workId: viewing.workId || 'etc',
-      date: viewing.date || '',
-      session: viewing.session || '',
-      theater: viewing.theater || viewing.venue || '',
-      cast: Array.isArray(viewing.cast)
-        ? viewing.cast.map(member => ({
-            actor: member.actor || '',
-            role: member.role || ''
-          }))
-        : []
-    }));
+          workId:
+            viewing.workId ||
+            'etc',
 
-    const threads = (state.threads || []).map(thread => ({
-      id: thread.id,
-      workId: thread.workId || 'etc',
-      viewingIds: Array.isArray(thread.viewingIds) ? thread.viewingIds : [],
-      title: thread.title || '',
-      author: thread.author || '',
-      createdAt: thread.createdAt || new Date().toISOString(),
-      source: thread.source || 'manual',
-      urls: Array.isArray(thread.urls) ? thread.urls : [],
-      posts: (Array.isArray(thread.posts) ? thread.posts : []).map(post => ({
-        owner: Boolean(post.owner),
-        author: post.author || '',
-        text: post.text || '',
-        context: Boolean(post.context),
-        quote: post.quote
-          ? {
-              author: post.quote.author || '',
-              text: post.quote.text || ''
-            }
-          : null,
-        media: (Array.isArray(post.media) ? post.media : [])
-          .filter(item => /^https?:\/\//i.test(item?.src || ''))
-          .slice(0, 4)
-          .map((item, index) => ({
-            type: 'link',
-            src: item.src,
-            alt: item.alt || '',
-            source: 'url',
-            order: index
-          }))
-      }))
-    }));
+          date:
+            viewing.date ||
+            '',
+
+          session:
+            viewing.session ||
+            '',
+
+          theater:
+            viewing.theater ||
+            viewing.venue ||
+            '',
+
+          cast:
+            Array.isArray(
+              viewing.cast
+            )
+              ? viewing.cast.map(
+                  member => ({
+                    actor:
+                      member.actor ||
+                      '',
+                    role:
+                      member.role ||
+                      ''
+                  })
+                )
+              : []
+        })
+      );
+
+    const threads =
+      (
+        state.threads ||
+        []
+      ).map(
+        thread => ({
+          id:
+            thread.id,
+
+          workId:
+            thread.workId ||
+            'etc',
+
+          viewingIds:
+            Array.isArray(
+              thread.viewingIds
+            )
+              ? thread.viewingIds
+              : [],
+
+          title:
+            thread.title ||
+            '',
+
+          author:
+            thread.author ||
+            '',
+
+          createdAt:
+            thread.createdAt ||
+            new Date()
+              .toISOString(),
+
+          source:
+            thread.source ||
+            'manual',
+
+          urls:
+            Array.isArray(
+              thread.urls
+            )
+              ? thread.urls
+              : [],
+
+          posts:
+            (
+              Array.isArray(
+                thread.posts
+              )
+                ? thread.posts
+                : []
+            ).map(
+              post => ({
+                owner:
+                  Boolean(
+                    post.owner
+                  ),
+
+                author:
+                  post.author ||
+                  '',
+
+                text:
+                  post.text ||
+                  '',
+
+                context:
+                  Boolean(
+                    post.context
+                  ),
+
+                quote:
+                  post.quote
+                    ? {
+                        author:
+                          post.quote
+                            .author ||
+                          '',
+                        text:
+                          post.quote
+                            .text ||
+                          ''
+                      }
+                    : null,
+
+                media:
+                  (
+                    Array.isArray(
+                      post.media
+                    )
+                      ? post.media
+                      : []
+                  )
+                    .filter(
+                      item =>
+                        /^https?:\/\//i.test(
+                          item?.src ||
+                            ''
+                        )
+                    )
+                    .slice(
+                      0,
+                      4
+                    )
+                    .map(
+                      (
+                        item,
+                        index
+                      ) => ({
+                        type:
+                          'link',
+                        src:
+                          item.src,
+                        alt:
+                          item.alt ||
+                          '',
+                        source:
+                          'url',
+                        order:
+                          index
+                      })
+                    )
+              })
+            )
+        })
+      );
 
     return {
       accounts,
@@ -123,16 +890,31 @@
     };
   }
 
-  async function pushArchiveSnapshot(payload) {
-    const response = await fetch('/api/archive', {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
+  async function pushArchiveSnapshot(
+    payload
+  ) {
+    const response =
+      await fetch(
+        '/api/archive',
+        {
+          method:
+            'PUT',
 
-    if (!response.ok) {
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            )
+        }
+      );
+
+    if (
+      !response.ok
+    ) {
       let message =
         '기록을 서버에 저장하지 못했어요.';
 
@@ -140,7 +922,9 @@
         const data =
           await response.json();
 
-        if (data?.error) {
+        if (
+          data?.error
+        ) {
           message =
             data.error;
         }
@@ -153,7 +937,9 @@
   }
 
   function queueArchiveSync() {
-    if (!archiveReady) {
+    if (
+      !archiveReady
+    ) {
       return;
     }
 
@@ -166,33 +952,40 @@
 
     archiveSyncQueue =
       archiveSyncQueue
-        .catch(() => {})
-        .then(() =>
-          pushArchiveSnapshot(
-            payload
-          )
+        .catch(
+          () => {}
         )
-        .then(() => {
-          archiveSyncErrorShown =
-            false;
-        })
-        .catch(error => {
-          console.error(
-            'HTH D1 sync failed:',
-            error
-          );
-
-          if (
-            !archiveSyncErrorShown
-          ) {
+        .then(
+          () =>
+            pushArchiveSnapshot(
+              payload
+            )
+        )
+        .then(
+          () => {
             archiveSyncErrorShown =
-              true;
-
-            toast(
-              '서버 저장에 실패했어요. 인터넷 연결 후 다시 저장해 주세요.'
-            );
+              false;
           }
-        });
+        )
+        .catch(
+          error => {
+            console.error(
+              'HTH D1 sync failed:',
+              error
+            );
+
+            if (
+              !archiveSyncErrorShown
+            ) {
+              archiveSyncErrorShown =
+                true;
+
+              toast(
+                '서버 저장에 실패했어요. 인터넷 연결 후 다시 저장해 주세요.'
+              );
+            }
+          }
+        );
   }
 
   persist = function() {
@@ -211,16 +1004,22 @@
   async function hydrateArchiveFromD1() {
     try {
       while (
-        document.documentElement
+        document
+          .documentElement
           .classList
           .contains(
             'hth-auth-pending'
           )
       ) {
-        await sleep(60);
+        await sleep(
+          60
+        );
       }
 
-      await sleep(180);
+      await sleep(
+        180
+      );
+
       await loadWorksFromDB();
 
       const response =
@@ -228,7 +1027,9 @@
           '/api/archive'
         );
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
         throw new Error(
           '서버 기록을 불러오지 못했어요.'
         );
@@ -286,12 +1087,16 @@
         }
 
         castByWork
-          .get(key)
+          .get(
+            key
+          )
           .push({
             actor:
-              item.actor || '',
+              item.actor ||
+              '',
             role:
-              item.role || ''
+              item.role ||
+              ''
           });
       }
 
@@ -299,14 +1104,17 @@
         state.works.map(
           work => ({
             ...work,
+
             castPool:
-              work.id === 'etc'
+              work.id ===
+              'etc'
                 ? []
                 : castByWork.get(
                     String(
                       work.id
                     )
-                  ) || []
+                  ) ||
+                  []
           })
         );
 
@@ -340,7 +1148,9 @@
   ) {
     const lines =
       raw
-        .split(/\n+/)
+        .split(
+          /\n+/
+        )
         .map(
           x =>
             x.trim()
@@ -350,7 +1160,8 @@
         );
 
     if (
-      lines.length > 4
+      lines.length >
+      4
     ) {
       toast(
         '이미지 링크는 한 포스트에 최대 4개까지 저장할 수 있어요.'
@@ -367,7 +1178,9 @@
           )
       );
 
-    if (invalid) {
+    if (
+      invalid
+    ) {
       toast(
         '이미지 링크는 http:// 또는 https:// 주소로 입력해 주세요.'
       );
@@ -376,19 +1189,32 @@
     }
 
     return lines.map(
-      (url, i) => ({
+      (
+        url,
+        i
+      ) => ({
         id:
           `link-${Date.now()}-${i}-${Math.random()
-            .toString(36)
-            .slice(2, 7)}`,
+            .toString(
+              36
+            )
+            .slice(
+              2,
+              7
+            )}`,
+
         type:
           'link',
+
         src:
           url,
+
         alt:
           `이미지 링크 ${i + 1}`,
+
         source:
           'url',
+
         order:
           i
       })
@@ -400,10 +1226,13 @@
   ) {
     const raw =
       String(
-        value || ''
+        value ||
+          ''
       ).trim();
 
-    if (!raw) {
+    if (
+      !raw
+    ) {
       return '';
     }
 
@@ -429,10 +1258,12 @@
         ? value
         : [];
 
-    const urls = [];
+    const urls =
+      [];
 
     for (
-      const item of list
+      const item of
+      list
     ) {
       const url =
         typeof item ===
@@ -458,7 +1289,8 @@
       }
 
       if (
-        urls.length >= 4
+        urls.length >=
+        4
       ) {
         break;
       }
@@ -485,7 +1317,9 @@
           ''
       ).trim();
 
-    if (!text) {
+    if (
+      !text
+    ) {
       return null;
     }
 
@@ -496,6 +1330,7 @@
             value.handle ||
             ''
         ),
+
       text
     };
   }
@@ -538,7 +1373,8 @@
     const seen =
       new Set();
 
-    const posts = [];
+    const posts =
+      [];
 
     for (
       const item of
@@ -589,7 +1425,9 @@
             ''
         ).trim();
 
-      if (!text) {
+      if (
+        !text
+      ) {
         continue;
       }
 
@@ -612,21 +1450,27 @@
 
       posts.push({
         id,
+
         url:
           /^https?:\/\//i.test(
             url
           )
             ? url
             : '',
+
         author,
+
         text,
+
         createdAt,
+
         media:
           normalizeCollectorMedia(
             item.media ||
               item.images ||
               []
           ),
+
         quote:
           normalizeCollectorQuote(
             item.quote ||
@@ -677,24 +1521,507 @@
     return normalizeCollectorMedia(
       urls
     ).map(
-      (url, index) => ({
+      (
+        url,
+        index
+      ) => ({
         id:
           `x-link-${Date.now()}-${index}-${Math.random()
-            .toString(36)
-            .slice(2, 7)}`,
+            .toString(
+              36
+            )
+            .slice(
+              2,
+              7
+            )}`,
+
         type:
           'link',
+
         src:
           url,
+
         alt:
           `X 첨부 이미지 링크 ${index + 1}`,
+
         source:
           'url',
+
         order:
           index
       })
     );
   }
+
+  function viewingCastText(
+    viewing
+  ) {
+    const cast =
+      Array.isArray(
+        viewing?.cast
+      )
+        ? viewing.cast
+        : [];
+
+    return cast
+      .filter(
+        member =>
+          (
+            member.actor ||
+            ''
+          ).trim()
+      )
+      .map(
+        member => {
+          const actor =
+            (
+              member.actor ||
+              ''
+            ).trim();
+
+          const role =
+            (
+              member.role ||
+              ''
+            ).trim();
+
+          return role
+            ? `${actor} ${role}`
+            : actor;
+        }
+      )
+      .join(
+        ' · '
+      );
+  }
+
+  async function copyCollectorCode() {
+    try {
+      await navigator.clipboard.writeText(
+        HTH_COLLECTOR_BOOKMARKLET
+      );
+
+      toast(
+        '수집기 코드를 복사했어요.'
+      );
+    } catch {
+      const textarea =
+        document.createElement(
+          'textarea'
+        );
+
+      textarea.value =
+        HTH_COLLECTOR_BOOKMARKLET;
+
+      textarea.style.position =
+        'fixed';
+
+      textarea.style.opacity =
+        '0';
+
+      document.body.appendChild(
+        textarea
+      );
+
+      textarea.select();
+
+      document.execCommand(
+        'copy'
+      );
+
+      textarea.remove();
+
+      toast(
+        '수집기 코드를 복사했어요.'
+      );
+    }
+  }
+
+  function bindBookmarkletLink(
+    link
+  ) {
+    if (
+      !link
+    ) {
+      return;
+    }
+
+    link.setAttribute(
+      'href',
+      HTH_COLLECTOR_BOOKMARKLET
+    );
+
+    link.setAttribute(
+      'draggable',
+      'true'
+    );
+
+    link.addEventListener(
+      'click',
+      event => {
+        event.preventDefault();
+
+        toast(
+          '이 버튼을 북마크바로 끌어다 놓아 주세요.'
+        );
+      }
+    );
+
+    link.addEventListener(
+      'dragstart',
+      event => {
+        event.dataTransfer?.setData(
+          'text/uri-list',
+          HTH_COLLECTOR_BOOKMARKLET
+        );
+
+        event.dataTransfer?.setData(
+          'text/plain',
+          HTH_COLLECTOR_BOOKMARKLET
+        );
+      }
+    );
+  }
+
+  function openCollectorInstallGuide() {
+    modalLayer.innerHTML = `
+      <div class="modal">
+        <div class="modal-head">
+          <h2>
+            HTH X 수집기 설치
+          </h2>
+
+          <button
+            class="close-btn"
+            data-close
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="collector-note">
+            수집기는 X에서
+            <b>
+              현재 브라우저에 표시된 포스트
+            </b>
+            만 읽어요.
+            X 비밀번호나 로그인 정보는 가져오지 않습니다.
+          </div>
+
+          <div
+            class="collector-install-steps"
+          >
+            <div
+              class="collector-install-step"
+            >
+              <b>1</b>
+
+              <div>
+                북마크바를 켜 주세요.
+
+                <small>
+                  Mac:
+                  ⌘ + Shift + B
+                  · Windows:
+                  Ctrl + Shift + B
+                </small>
+              </div>
+            </div>
+
+            <div
+              class="collector-install-step"
+            >
+              <b>2</b>
+
+              <div>
+                아래
+                <strong>
+                  HTH 수집
+                </strong>
+                버튼을
+                북마크바로 끌어다 놓으세요.
+
+                <small>
+                  Chrome / Whale / Edge 등
+                  Chromium 브라우저 권장
+                </small>
+              </div>
+            </div>
+
+            <div
+              class="collector-install-drag"
+            >
+              <a
+                class="collector-bookmarklet"
+                id="collectorInstallBookmarklet"
+                href="#"
+              >
+                ☷ HTH 수집
+              </a>
+            </div>
+
+            <div
+              class="collector-install-step"
+            >
+              <b>3</b>
+
+              <div>
+                X 타래 첫 글을 연 뒤
+                북마크바의
+                <strong>
+                  HTH 수집
+                </strong>
+                을 누르고,
+                타래 끝까지 스크롤하세요.
+
+                <small>
+                  마지막에 JSON 복사 →
+                  HTH 브라우저 가져오기에 붙여넣기
+                </small>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="collector-security-note"
+          >
+            드래그 설치가 되지 않으면
+            일반 북마크를 하나 만든 뒤
+            URL을 지우고
+            ‘수집기 코드 복사’로 복사한 코드를
+            URL 칸에 붙여넣어도 됩니다.
+          </div>
+
+          <div
+            class="footer-actions"
+          >
+            <button
+              type="button"
+              class="btn"
+              id="copyCollectorCode"
+            >
+              수집기 코드 복사
+            </button>
+
+            <button
+              type="button"
+              class="btn primary"
+              id="collectorInstalled"
+            >
+              설치 완료
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    bindModalClose();
+
+    bindBookmarkletLink(
+      $(
+        '#collectorInstallBookmarklet'
+      )
+    );
+
+    $('#copyCollectorCode')
+      ?.addEventListener(
+        'click',
+        copyCollectorCode
+      );
+
+    $('#collectorInstalled')
+      ?.addEventListener(
+        'click',
+        () => {
+          localStorage.setItem(
+            'hth-collector-installed',
+            '1'
+          );
+
+          closeModal();
+
+          if (
+            route ===
+            'home'
+          ) {
+            renderHome();
+          }
+
+          toast(
+            'HTH 수집기 설치 완료!'
+          );
+        }
+      );
+  }
+
+  function injectCollectorInstallCard() {
+    if (
+      route !==
+      'home'
+    ) {
+      return;
+    }
+
+    const page =
+      view.querySelector(
+        '.page'
+      );
+
+    if (
+      !page ||
+      page.querySelector(
+        '.collector-install-card'
+      )
+    ) {
+      return;
+    }
+
+    const installed =
+      localStorage.getItem(
+        'hth-collector-installed'
+      ) ===
+      '1';
+
+    const card =
+      document.createElement(
+        'section'
+      );
+
+    card.className =
+      `collector-install-card${
+        installed
+          ? ' is-installed'
+          : ''
+      }`;
+
+    card.innerHTML =
+      installed
+        ? `
+          <div
+            class="collector-install-copy"
+          >
+            <div
+              class="collector-install-eyebrow"
+            >
+              X Collector
+            </div>
+
+            <h3>
+              HTH 수집기가 설치되어 있어요
+            </h3>
+
+            <p>
+              X에서 타래를 열고
+              북마크바의
+              ‘HTH 수집’을 누르면 됩니다.
+            </p>
+          </div>
+
+          <div
+            class="collector-install-actions"
+          >
+            <button
+              class="btn"
+              id="reopenCollectorGuide"
+              type="button"
+            >
+              설치 방법 / 다시 설치
+            </button>
+          </div>
+        `
+        : `
+          <div
+            class="collector-install-copy"
+          >
+            <div
+              class="collector-install-eyebrow"
+            >
+              X Collector · API 없이 무료
+            </div>
+
+            <h3>
+              긴 X 타래도 스크롤 한 번으로 백업해요
+            </h3>
+
+            <p>
+              HTH 수집기를 북마크바에 한 번만 추가하면,
+              X에서 타래를 끝까지 스크롤하며
+              포스트를 모을 수 있어요.
+              설치는 1분이면 끝나요.
+            </p>
+          </div>
+
+          <div
+            class="collector-install-actions"
+          >
+            <a
+              class="collector-bookmarklet"
+              id="homeCollectorBookmarklet"
+              href="#"
+            >
+              ☷ HTH 수집
+            </a>
+
+            <button
+              class="btn"
+              id="openCollectorGuide"
+              type="button"
+            >
+              설치 방법 보기
+            </button>
+          </div>
+        `;
+
+    const hero =
+      page.querySelector(
+        '.hero-search'
+      );
+
+    if (
+      hero
+    ) {
+      hero.insertAdjacentElement(
+        'afterend',
+        card
+      );
+    } else {
+      page.prepend(
+        card
+      );
+    }
+
+    if (
+      installed
+    ) {
+      $('#reopenCollectorGuide')
+        ?.addEventListener(
+          'click',
+          openCollectorInstallGuide
+        );
+    } else {
+      bindBookmarkletLink(
+        $(
+          '#homeCollectorBookmarklet'
+        )
+      );
+
+      $('#openCollectorGuide')
+        ?.addEventListener(
+          'click',
+          openCollectorInstallGuide
+        );
+    }
+  }
+
+  const originalRenderHome =
+    renderHome;
+
+  renderHome = function() {
+    originalRenderHome();
+
+    injectCollectorInstallCard();
+  };
 
   mediaGrid = function(
     media = []
@@ -738,7 +2065,10 @@
                 <span>
                   이미지 링크 ${i + 1}
                 </span>
-                <span>↗</span>
+
+                <span>
+                  ↗
+                </span>
               </a>
             `
           )
@@ -757,34 +2087,47 @@
 
     const first =
       t.posts.find(
-        p => p.owner
+        p =>
+          p.owner
       )?.text ||
       '';
 
     const linkCount =
-      mediaCount(t);
+      mediaCount(
+        t
+      );
 
     return `
       <button
         class="thread-card"
         data-thread="${t.id}"
       >
-        <span class="thread-card-content">
-          <span class="thread-top">
-            <span class="work-label">
+        <span
+          class="thread-card-content"
+        >
+          <span
+            class="thread-top"
+          >
+            <span
+              class="work-label"
+            >
               ${esc(
                 w?.title ||
                   '미분류'
               )}
             </span>
 
-            <span class="count-badge">
+            <span
+              class="count-badge"
+            >
               ${
                 t.posts.filter(
                   p =>
                     p.owner
                 ).length
-              } posts
+              }
+              posts
+
               ${
                 linkCount
                   ? ` · 🔗 ${linkCount}`
@@ -805,11 +2148,14 @@
             )}
           </p>
 
-          <span class="thread-foot">
+          <span
+            class="thread-foot"
+          >
             <span>
               ${esc(
                 t.author
-              )} ·
+              )}
+              ·
               ${fmtLongDate(
                 t.createdAt
               )}
@@ -836,10 +2182,13 @@
     const t =
       state.threads.find(
         x =>
-          x.id === id
+          x.id ===
+          id
       );
 
-    if (!t) {
+    if (
+      !t
+    ) {
       routeTo(
         'home'
       );
@@ -873,7 +2222,8 @@
         );
 
     const backButton =
-      w.id === 'etc'
+      w.id ===
+      'etc'
         ? `
           <button
             class="detail-back"
@@ -894,19 +2244,29 @@
         `;
 
     view.innerHTML = `
-      <section class="page thread-detail">
+      <section
+        class="page thread-detail"
+      >
         ${backButton}
 
-        <div class="thread-header">
-          <div class="thread-top">
-            <span class="work-label">
+        <div
+          class="thread-header"
+        >
+          <div
+            class="thread-top"
+          >
+            <span
+              class="work-label"
+            >
               ${esc(
                 w.title ||
                   '미분류'
               )}
             </span>
 
-            <div class="toolbar">
+            <div
+              class="toolbar"
+            >
               <button
                 class="btn"
                 id="manageThread"
@@ -939,41 +2299,72 @@
             )}
           </h1>
 
-          <div class="meta">
+          <div
+            class="meta"
+          >
             ${esc(
               t.author
-            )} ·
+            )}
+            ·
             ${fmtLongDate(
               t.createdAt
-            )} ·
+            )}
+            ·
             ${
               t.posts.filter(
                 p =>
                   p.owner
               ).length
-            } posts
+            }
+            posts
           </div>
 
           ${
             linkedViewings.length
               ? `
                 <div
-                  class="chips"
-                  style="margin-top:13px"
+                  class="thread-viewings"
                 >
                   ${linkedViewings
                     .map(
-                      v => `
-                        <span class="chip mint">
-                          ${fmtDate(
-                            v.date
-                          )}
-                          ${esc(
-                            v.session ||
-                              ''
-                          )}
-                        </span>
-                      `
+                      v => {
+                        const cast =
+                          viewingCastText(
+                            v
+                          );
+
+                        return `
+                          <span
+                            class="chip mint thread-viewing-chip"
+                          >
+                            <span
+                              class="thread-viewing-date"
+                            >
+                              ${fmtDate(
+                                v.date
+                              )}
+                              ${esc(
+                                v.session ||
+                                  ''
+                              )}
+                            </span>
+
+                            ${
+                              cast
+                                ? `
+                                  <span
+                                    class="thread-viewing-cast"
+                                  >
+                                    · ${esc(
+                                      cast
+                                    )}
+                                  </span>
+                                `
+                                : ''
+                            }
+                          </span>
+                        `;
+                      }
                     )
                     .join('')}
                 </div>
@@ -982,7 +2373,9 @@
           }
         </div>
 
-        <div class="thread-posts">
+        <div
+          class="thread-posts"
+        >
           ${t.posts
             .map(
               (
@@ -1023,6 +2416,7 @@
             ?.scrollIntoView({
               behavior:
                 'smooth',
+
               block:
                 'center'
             }),
@@ -1093,24 +2487,29 @@
 
     return {
       owner,
+
       text:
         post.text ||
         '',
+
       author:
         post.author ||
         '',
+
       quoteAuthor:
         owner
           ? post.quote
               ?.author ||
             ''
           : '',
+
       quoteText:
         owner
           ? post.quote
               ?.text ||
             ''
           : '',
+
       mediaRaw:
         owner
           ? (
@@ -1152,7 +2551,9 @@
           threadId
       );
 
-    if (!t) {
+    if (
+      !t
+    ) {
       toast(
         '타래를 찾지 못했어요.'
       );
@@ -1204,6 +2605,7 @@
                   w.id
                 )
               )}"
+
               ${
                 String(
                   w.id
@@ -1225,7 +2627,9 @@
 
     modalLayer.innerHTML = `
       <div class="modal">
-        <div class="modal-head">
+        <div
+          class="modal-head"
+        >
           <h2>
             타래 관리
           </h2>
@@ -1238,9 +2642,15 @@
           </button>
         </div>
 
-        <div class="modal-body">
-          <div class="form-grid">
-            <div class="field">
+        <div
+          class="modal-body"
+        >
+          <div
+            class="form-grid"
+          >
+            <div
+              class="field"
+            >
               <label>
                 타래 제목
               </label>
@@ -1254,7 +2664,9 @@
               >
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 작품
               </label>
@@ -1265,13 +2677,17 @@
                 ${workOptions}
               </select>
 
-              <span class="field-hint">
+              <span
+                class="field-hint"
+              >
                 작품을 옮기면 새 작품과 맞지 않는
                 관극 연결은 자동으로 해제돼요.
               </span>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 작성 계정
               </label>
@@ -1286,7 +2702,9 @@
               >
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 작성일
               </label>
@@ -1300,7 +2718,9 @@
               >
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 관극 연결
               </label>
@@ -1311,7 +2731,9 @@
               ></div>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 포스트
               </label>
@@ -1396,7 +2818,9 @@
               index
             ];
 
-          if (!draft) {
+          if (
+            !draft
+          ) {
             return;
           }
 
@@ -1600,7 +3024,9 @@
               )
               .join('')
           : `
-            <div class="empty">
+            <div
+              class="empty"
+            >
               포스트가 없어요.
               아래 버튼으로 추가해 주세요.
             </div>
@@ -1708,46 +3134,77 @@
         list.length
           ? list
               .map(
-                v => `
-                  <label class="chip">
-                    <input
-                      type="checkbox"
-                      name="threadViewing"
-                      value="${esc(
-                        String(
-                          v.id
-                        )
-                      )}"
-                      ${
-                        selectedViewingIds.has(
+                v => {
+                  const cast =
+                    viewingCastText(
+                      v
+                    );
+
+                  return `
+                    <label
+                      class="viewing-choice"
+                    >
+                      <input
+                        type="checkbox"
+                        name="threadViewing"
+                        value="${esc(
                           String(
                             v.id
                           )
-                        )
-                          ? 'checked'
-                          : ''
-                      }
-                    >
+                        )}"
+                        ${
+                          selectedViewingIds.has(
+                            String(
+                              v.id
+                            )
+                          )
+                            ? 'checked'
+                            : ''
+                        }
+                      >
 
-                    ${fmtDate(
-                      v.date
-                    )}
-                    ${esc(
-                      v.session ||
-                        ''
-                    )}
+                      <span
+                        class="viewing-choice-main"
+                      >
+                        <b>
+                          ${fmtDate(
+                            v.date
+                          )}
+                          ${esc(
+                            v.session ||
+                              ''
+                          )}
+                        </b>
 
-                    ${
-                      v.theater ||
-                      v.venue
-                        ? ` · ${esc(
-                            v.theater ||
-                              v.venue
-                          )}`
-                        : ''
-                    }
-                  </label>
-                `
+                        ${
+                          v.theater ||
+                          v.venue
+                            ? `
+                              <span>
+                                · ${esc(
+                                  v.theater ||
+                                    v.venue
+                                )}
+                              </span>
+                            `
+                            : ''
+                        }
+
+                        ${
+                          cast
+                            ? `
+                              <span>
+                                · ${esc(
+                                  cast
+                                )}
+                              </span>
+                            `
+                            : ''
+                        }
+                      </span>
+                    </label>
+                  `;
+                }
               )
               .join('')
           : `
@@ -1767,6 +3224,7 @@
         'change',
         () => {
           captureViewingChecks();
+
           renderViewingChoices();
         }
       );
@@ -1780,14 +3238,19 @@
           draftPosts.push({
             owner:
               true,
+
             text:
               '',
+
             author:
               '',
+
             quoteAuthor:
               '',
+
             quoteText:
               '',
+
             mediaRaw:
               ''
           });
@@ -1815,14 +3278,19 @@
           draftPosts.push({
             owner:
               false,
+
             text:
               '',
+
             author:
               '',
+
             quoteAuthor:
               '',
+
             quoteText:
               '',
+
             mediaRaw:
               ''
           });
@@ -1846,6 +3314,7 @@
         'click',
         () => {
           syncDraftPostsFromDom();
+
           captureViewingChecks();
 
           if (
@@ -1884,7 +3353,8 @@
             return;
           }
 
-          const posts = [];
+          const posts =
+            [];
 
           for (
             const p of
@@ -1913,15 +3383,20 @@
               posts.push({
                 owner:
                   true,
+
                 text:
-                  p.text.trim(),
+                  p.text
+                    .trim(),
+
                 media,
+
                 ...(quoteText
                   ? {
                       quote: {
                         author:
                           p.quoteAuthor
                             .trim(),
+
                         text:
                           quoteText
                       }
@@ -1932,15 +3407,19 @@
               posts.push({
                 owner:
                   false,
+
                 author:
                   p.author
                     .trim() ||
                   '@context',
+
                 text:
                   p.text
                     .trim(),
+
                 context:
                   true,
+
                 media:
                   []
               });
@@ -1973,7 +3452,9 @@
           t.title =
             $(
               '#manageThreadTitle'
-            ).value.trim() ||
+            )
+              .value
+              .trim() ||
             firstOwner.text
               .slice(
                 0,
@@ -2009,6 +3490,7 @@
           }
 
           persist();
+
           closeModal();
 
           routeTo(
@@ -2034,7 +3516,9 @@
               `“${t.title}” 타래를 삭제할까요?\n삭제 후 복구할 수 없습니다.`
             );
 
-          if (!ok) {
+          if (
+            !ok
+          ) {
             return;
           }
 
@@ -2049,6 +3533,7 @@
             );
 
           persist();
+
           closeModal();
 
           toast(
@@ -2068,6 +3553,7 @@
               {
                 id:
                   destinationWorkId,
+
                 tab:
                   'threads'
               }
@@ -2083,8 +3569,12 @@
 
   openManual = function() {
     modalLayer.innerHTML = `
-      <div class="modal">
-        <div class="modal-head">
+      <div
+        class="modal"
+      >
+        <div
+          class="modal-head"
+        >
           <h2>
             직접 추가하기
           </h2>
@@ -2097,12 +3587,16 @@
           </button>
         </div>
 
-        <div class="modal-body">
+        <div
+          class="modal-body"
+        >
           <form
             class="form-grid"
             id="manualForm"
           >
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 작품
               </label>
@@ -2137,7 +3631,9 @@
               </select>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 작성 계정
               </label>
@@ -2165,7 +3661,9 @@
               }
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 타래 제목
               </label>
@@ -2214,7 +3712,8 @@
 
     bindModalClose();
 
-    let n = 0;
+    let n =
+      0;
 
     function addEditor() {
       n++;
@@ -2404,7 +3903,8 @@
               '#manualPosts .post-editor'
             );
 
-          const posts = [];
+          const posts =
+            [];
 
           for (
             const box of
@@ -2418,7 +3918,9 @@
                 .value
                 .trim();
 
-            if (!text) {
+            if (
+              !text
+            ) {
               continue;
             }
 
@@ -2433,7 +3935,7 @@
 
             if (
               media ===
-                null
+              null
             ) {
               return;
             }
@@ -2457,8 +3959,11 @@
             posts.push({
               owner:
                 true,
+
               text,
+
               media,
+
               ...(qText
                 ? {
                     quote: {
@@ -2470,6 +3975,7 @@
                           ?.value
                           .trim() ||
                         '',
+
                       text:
                         qText
                     }
@@ -2483,6 +3989,7 @@
               posts.push({
                 owner:
                   false,
+
                 author:
                   $(
                     '.context-author',
@@ -2491,10 +3998,13 @@
                     ?.value
                     .trim() ||
                   '@context',
+
                 text:
                   cText,
+
                 context:
                   true,
+
                 media:
                   []
               });
@@ -2584,6 +4094,7 @@
           );
 
           persist();
+
           closeModal();
 
           toast(
@@ -2606,8 +4117,12 @@
       defaultAccount();
 
     modalLayer.innerHTML = `
-      <div class="modal">
-        <div class="modal-head">
+      <div
+        class="modal"
+      >
+        <div
+          class="modal-head"
+        >
           <h2>
             브라우저에서 가져오기
           </h2>
@@ -2620,7 +4135,9 @@
           </button>
         </div>
 
-        <div class="modal-body">
+        <div
+          class="modal-body"
+        >
           <form
             class="form-grid"
             id="collectorImportForm"
@@ -2631,15 +4148,32 @@
               <b>
                 무료 브라우저 수집 방식
               </b>
+
               <br>
+
               X에서 HTH 수집기를 실행하고
               타래 끝까지 스크롤한 뒤,
               수집기가 복사해 준 JSON을
               아래 칸에 붙여넣어요.
               X API는 사용하지 않습니다.
+
+              <div
+                style="margin-top:10px"
+              >
+                <button
+                  type="button"
+                  class="text-btn"
+                  id="showCollectorInstallFromImport"
+                >
+                  아직 수집기가 없나요?
+                  설치 방법 보기 ›
+                </button>
+              </div>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 수집 데이터
               </label>
@@ -2658,7 +4192,9 @@
               </span>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 내 X 계정
               </label>
@@ -2692,7 +4228,9 @@
               </span>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 작품
               </label>
@@ -2714,15 +4252,23 @@
                   )
                   .map(
                     w =>
-                      `<option value="${w.id}">${esc(
-                        w.title
-                      )}</option>`
+                      `
+                        <option
+                          value="${w.id}"
+                        >
+                          ${esc(
+                            w.title
+                          )}
+                        </option>
+                      `
                   )
                   .join('')}
               </select>
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 타래 제목
               </label>
@@ -2733,14 +4279,20 @@
               >
             </div>
 
-            <div class="field">
+            <div
+              class="field"
+            >
               <label>
                 관극 연결 (선택)
               </label>
 
               <div
-                class="chips"
                 id="collectorViewingChips"
+                style="
+                  display:flex;
+                  flex-wrap:wrap;
+                  gap:8px
+                "
               ></div>
             </div>
 
@@ -2769,6 +4321,12 @@
     `;
 
     bindModalClose();
+
+    $('#showCollectorInstallFromImport')
+      ?.addEventListener(
+        'click',
+        openCollectorInstallGuide
+      );
 
     const work =
       $('#collectorWork');
@@ -2810,28 +4368,68 @@
         list.length
           ? list
               .map(
-                v => `
-                  <label class="chip">
-                    <input
-                      type="checkbox"
-                      name="collectorViewing"
-                      value="${esc(
-                        String(
-                          v.id
-                        )
-                      )}"
+                v => {
+                  const cast =
+                    viewingCastText(
+                      v
+                    );
+
+                  return `
+                    <label
+                      class="viewing-choice"
                     >
+                      <input
+                        type="checkbox"
+                        name="collectorViewing"
+                        value="${esc(
+                          String(
+                            v.id
+                          )
+                        )}"
+                      >
 
-                    ${fmtDate(
-                      v.date
-                    )}
+                      <span
+                        class="viewing-choice-main"
+                      >
+                        <b>
+                          ${fmtDate(
+                            v.date
+                          )}
+                          ${esc(
+                            v.session ||
+                              ''
+                          )}
+                        </b>
 
-                    ${esc(
-                      v.session ||
-                        ''
-                    )}
-                  </label>
-                `
+                        ${
+                          v.theater ||
+                          v.venue
+                            ? `
+                              <span>
+                                · ${esc(
+                                  v.theater ||
+                                    v.venue
+                                )}
+                              </span>
+                            `
+                            : ''
+                        }
+
+                        ${
+                          cast
+                            ? `
+                              <span>
+                                · ${esc(
+                                  cast
+                                )}
+                              </span>
+                            `
+                            : ''
+                        }
+                      </span>
+                    </label>
+                  `;
+                }
               )
               .join('')
           : `
@@ -2866,7 +4464,9 @@
         .trim() ||
       '';
 
-    if (!raw) {
+    if (
+      !raw
+    ) {
       toast(
         '수집기에서 복사한 JSON을 붙여넣어 주세요.'
       );
@@ -2946,7 +4546,9 @@
           index
         ) => ({
           ...post,
+
           index,
+
           mode:
             post.author &&
             post.author
@@ -2965,8 +4567,12 @@
       ).length;
 
     modalLayer.innerHTML = `
-      <div class="modal">
-        <div class="modal-head">
+      <div
+        class="modal"
+      >
+        <div
+          class="modal-head"
+        >
           <h2>
             가져올 포스트 확인
           </h2>
@@ -2979,7 +4585,9 @@
           </button>
         </div>
 
-        <div class="modal-body">
+        <div
+          class="modal-body"
+        >
           <div
             class="collector-summary"
           >
@@ -3154,7 +4762,7 @@
                     post.quote
                       ? `
                         <span>
-                          인용 1
+                          인용 있음
                         </span>
                       `
                       : ''
@@ -3264,6 +4872,7 @@
                               post.quote
                                 .author ||
                               '',
+
                             text:
                               post.quote
                                 .text
@@ -3294,7 +4903,9 @@
             );
 
           const firstOwnerDraft =
-            ownerPosts[0];
+            ownerPosts[
+              0
+            ];
 
           const createdCandidate =
             new Date(
@@ -3381,6 +4992,7 @@
           );
 
           persist();
+
           closeModal();
 
           toast(
