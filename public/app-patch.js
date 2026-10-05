@@ -105,9 +105,7 @@
       flex-wrap:wrap
     }
 
-    /* ─────────────────────────────
-       관극 연결 pill
-    ───────────────────────────── */
+    /* 관극 연결 pill */
 
     .viewing-choice{
       position:relative;
@@ -185,9 +183,7 @@
       font-size:11px
     }
 
-    /* ─────────────────────────────
-       새 관극 - 캐스트/배역 UI
-    ───────────────────────────── */
+    /* 새 관극 - 캐스트/배역 UI */
 
     .cast-role-line{
       display:grid !important;
@@ -275,9 +271,7 @@
       color:var(--muted,#8a8591)
     }
 
-    /* ─────────────────────────────
-       타래 상세 관극 + 캐스트
-    ───────────────────────────── */
+    /* 타래 상세 관극 + 캐스트 */
 
     .thread-viewings{
       display:flex;
@@ -307,9 +301,7 @@
       font-size:10px
     }
 
-    /* ─────────────────────────────
-       X 수집기 설치 카드
-    ───────────────────────────── */
+    /* X 수집기 설치 카드 */
 
     .collector-install-card{
       position:relative;
@@ -479,9 +471,7 @@
       line-height:1.6
     }
 
-    /* ─────────────────────────────
-       브라우저 가져오기
-    ───────────────────────────── */
+    /* 브라우저 가져오기 */
 
     .collector-json{
       min-height:210px;
@@ -625,8 +615,16 @@
   let archiveSyncErrorShown =
     false;
 
+  /*
+    X BOOKMARK COLLECTOR v2
+    - 이미 수집한 트윗도 다시 스캔
+    - lazy-loaded 이미지 합치기
+    - 이미지 src 변화 감시
+    - 현재 status의 photo 링크 우선
+    - 이미지 개수 표시
+  */
   const HTH_COLLECTOR_BOOKMARKLET =
-    `javascript:(()=>{if(window.__HTH_COLLECTOR__){window.__HTH_COLLECTOR__.show();return;}const S={posts:new Map(),seq:0,observer:null,panel:null};function info(a){const t=a.querySelector('time');const l=t?.closest('a[href*="/status/"]');const h=l?.getAttribute('href')||'';const m=h.match(/^\\/([^/]+)\\/status\\/(\\d+)/);if(!m)return null;return{handle:'@'+m[1],id:m[2],url:'https://x.com/'+m[1]+'/status/'+m[2],createdAt:t?.getAttribute('datetime')||''};}function scan(){document.querySelectorAll('article[data-testid="tweet"]').forEach(a=>{const meta=info(a);if(!meta||S.posts.has(meta.id))return;const texts=[...a.querySelectorAll('[data-testid="tweetText"]')];const text=texts[0]?.innerText?.trim()||'';if(!text)return;const media=[...a.querySelectorAll('img[src*="pbs.twimg.com/media/"]')].map(i=>i.src).filter(Boolean).filter((v,i,r)=>r.indexOf(v)===i).slice(0,4);let quote=null;if(texts.length>1){const qt=texts[1]?.innerText?.trim()||'';if(qt)quote={author:'',text:qt};}S.posts.set(meta.id,{...meta,text,media,quote,order:S.seq++});});update();}function update(){if(!S.panel)return;const c=S.panel.querySelector('[data-hth-count]');if(c)c.textContent=S.posts.size+'개 수집됨';}function copy(){const posts=[...S.posts.values()].sort((a,b)=>a.order-b.order).map(({order,...p})=>p);const payload={version:1,pageUrl:location.href,collectedAt:new Date().toISOString(),posts};const text=JSON.stringify(payload);navigator.clipboard?.writeText(text).then(()=>flash('복사 완료! HTH에 붙여넣기')).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();flash('복사 완료! HTH에 붙여넣기');});}function flash(msg){const el=S.panel?.querySelector('[data-hth-msg]');if(!el)return;el.textContent=msg;setTimeout(()=>{if(el)el.textContent='';},2200);}function show(){if(S.panel){S.panel.style.display='block';return;}const p=document.createElement('div');p.id='hth-x-collector';p.style.cssText='position:fixed;right:18px;bottom:18px;z-index:2147483647;width:260px;padding:14px;border-radius:16px;background:#fff;color:#222;border:1px solid #ddd;box-shadow:0 14px 40px rgba(0,0,0,.18);font:13px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>HTH 타래 수집</b><button data-hth-hide style="border:0;background:none;font-size:18px;cursor:pointer">×</button></div><div data-hth-count style="margin-top:8px;font-weight:700">0개 수집됨</div><div style="margin-top:5px;color:#777;font-size:11px">첫 글부터 끝까지 천천히 스크롤하세요.</div><div data-hth-msg style="min-height:18px;margin-top:8px;color:#6d5be7;font-size:11px"></div><div style="display:flex;gap:7px;margin-top:8px"><button data-hth-copy style="flex:1;border:0;border-radius:10px;padding:9px;background:#19191d;color:#fff;font-weight:700;cursor:pointer">JSON 복사</button><button data-hth-clear style="border:1px solid #ddd;border-radius:10px;padding:9px;background:#fff;cursor:pointer">초기화</button></div>';document.body.appendChild(p);S.panel=p;p.querySelector('[data-hth-hide]').onclick=()=>p.style.display='none';p.querySelector('[data-hth-copy]').onclick=copy;p.querySelector('[data-hth-clear]').onclick=()=>{S.posts.clear();S.seq=0;scan();flash('수집 목록 초기화');};update();}S.observer=new MutationObserver(()=>scan());S.observer.observe(document.body,{childList:true,subtree:true});S.show=show;S.scan=scan;S.copy=copy;window.__HTH_COLLECTOR__=S;show();scan();})();`;
+    String.raw`javascript:(()=>{const old=window.__HTH_COLLECTOR__;if(old){if(old.version===2){old.show();old.scan();return;}try{old.observer?.disconnect();}catch{}try{old.panel?.remove();}catch{}try{delete window.__HTH_COLLECTOR__;}catch{window.__HTH_COLLECTOR__=null;}}const S={version:2,posts:new Map(),seq:0,observer:null,panel:null,scanTimer:null,lateTimer:null,laterTimer:null};function info(article){const times=[...article.querySelectorAll('time')];for(const t of times){const link=t.closest('a[href*="/status/"]');const href=link?.getAttribute('href')||'';const m=href.match(/^\/([^/]+)\/status\/(\d+)/);if(m){return{handle:'@'+m[1],id:m[2],url:'https://x.com/'+m[1]+'/status/'+m[2],createdAt:t.getAttribute('datetime')||''};}}return null;}function bestMediaUrl(src){if(!src)return'';try{const u=new URL(src,location.href);if(u.hostname==='pbs.twimg.com'&&u.pathname.startsWith('/media/'))u.searchParams.set('name','orig');return u.href;}catch{return src;}}function mediaFor(article,meta){const found=[];const seen=new Set();function add(img){const raw=img?.currentSrc||img?.src||img?.getAttribute?.('src')||'';if(!raw||!raw.includes('pbs.twimg.com/media/'))return;const src=bestMediaUrl(raw);if(!seen.has(src)){seen.add(src);found.push(src);}}article.querySelectorAll('a[href*="/status/'+meta.id+'/photo/"] img[src]').forEach(add);article.querySelectorAll('[data-testid="tweetPhoto"] img[src]').forEach(img=>{const link=img.closest('a[href*="/status/"]');const href=link?.getAttribute('href')||'';if(!href||href.includes('/status/'+meta.id+'/photo/'))add(img);});article.querySelectorAll('img[src*="pbs.twimg.com/media/"]').forEach(img=>{const link=img.closest('a[href*="/status/"]');const href=link?.getAttribute('href')||'';const statusMatch=href.match(/\/status\/(\d+)/);if(!statusMatch||statusMatch[1]===meta.id)add(img);});return found.slice(0,4);}function quoteFor(article){const texts=[...article.querySelectorAll('[data-testid="tweetText"]')];if(texts.length<2)return null;const text=texts[1]?.innerText?.trim()||'';return text?{author:'',text}:null;}function mergeUnique(a=[],b=[]){return[...new Set([...a,...b])].slice(0,4);}function scan(){document.querySelectorAll('article[data-testid="tweet"]').forEach(article=>{const meta=info(article);if(!meta)return;const texts=[...article.querySelectorAll('[data-testid="tweetText"]')];const text=texts[0]?.innerText?.trim()||'';const media=mediaFor(article,meta);const quote=quoteFor(article);const prev=S.posts.get(meta.id);if(prev){prev.handle=meta.handle||prev.handle;prev.url=meta.url||prev.url;prev.createdAt=meta.createdAt||prev.createdAt;if(text)prev.text=text;prev.media=mergeUnique(prev.media,media);if(quote)prev.quote=quote;return;}if(!text&&!media.length)return;S.posts.set(meta.id,{...meta,text,media,quote,order:S.seq++});});update();}function scheduleScan(){clearTimeout(S.scanTimer);clearTimeout(S.lateTimer);clearTimeout(S.laterTimer);S.scanTimer=setTimeout(scan,70);S.lateTimer=setTimeout(scan,450);S.laterTimer=setTimeout(scan,1400);}function counts(){let images=0;for(const post of S.posts.values())images+=(post.media||[]).length;return{posts:S.posts.size,images};}function update(){if(!S.panel)return;const c=S.panel.querySelector('[data-hth-count]');if(!c)return;const n=counts();c.textContent=n.posts+'개 수집됨 · 이미지 '+n.images+'개';}function payload(){const posts=[...S.posts.values()].sort((a,b)=>a.order-b.order).map(({order,...post})=>post);return{version:1,collectorVersion:2,pageUrl:location.href,collectedAt:new Date().toISOString(),posts};}function fallbackCopy(text,done){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();done();}function flash(msg){const el=S.panel?.querySelector('[data-hth-msg]');if(!el)return;el.textContent=msg;setTimeout(()=>{if(el)el.textContent='';},2400);}function copy(){scan();const text=JSON.stringify(payload());const done=()=>flash('복사 완료! HTH에 붙여넣기');if(navigator.clipboard?.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));}else fallbackCopy(text,done);}function show(){if(S.panel){S.panel.style.display='block';update();return;}const p=document.createElement('div');p.id='hth-x-collector';p.style.cssText='position:fixed;right:18px;bottom:18px;z-index:2147483647;width:280px;padding:14px;border-radius:16px;background:#fff;color:#222;border:1px solid #ddd;box-shadow:0 14px 40px rgba(0,0,0,.18);font:13px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif';p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>HTH 타래 수집 v2</b><button data-hth-hide style="border:0;background:none;font-size:18px;cursor:pointer">×</button></div><div data-hth-count style="margin-top:8px;font-weight:700">0개 수집됨 · 이미지 0개</div><div style="margin-top:5px;color:#777;font-size:11px">첫 글부터 끝까지 천천히 스크롤하세요. 이미지가 늦게 뜨는 트윗도 재확인합니다.</div><div data-hth-msg style="min-height:18px;margin-top:8px;color:#6d5be7;font-size:11px"></div><div style="display:flex;gap:7px;margin-top:8px"><button data-hth-copy style="flex:1;border:0;border-radius:10px;padding:9px;background:#19191d;color:#fff;font-weight:700;cursor:pointer">JSON 복사</button><button data-hth-rescan style="border:1px solid #ddd;border-radius:10px;padding:9px;background:#fff;cursor:pointer">재스캔</button><button data-hth-clear style="border:1px solid #ddd;border-radius:10px;padding:9px;background:#fff;cursor:pointer">초기화</button></div>';document.body.appendChild(p);S.panel=p;p.querySelector('[data-hth-hide]').onclick=()=>p.style.display='none';p.querySelector('[data-hth-copy]').onclick=copy;p.querySelector('[data-hth-rescan]').onclick=()=>{scan();scheduleScan();flash('현재 화면 이미지까지 다시 확인 중');};p.querySelector('[data-hth-clear]').onclick=()=>{S.posts.clear();S.seq=0;scan();flash('수집 목록 초기화');};update();}S.observer=new MutationObserver(scheduleScan);S.observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});window.addEventListener('scroll',scheduleScan,{passive:true});S.show=show;S.scan=scan;S.copy=copy;S.payload=payload;window.__HTH_COLLECTOR__=S;show();scan();scheduleScan();})();`;
 
   function sleep(ms) {
     return new Promise(
@@ -1602,7 +1600,7 @@
       );
 
       toast(
-        '수집기 코드를 복사했어요.'
+        '수집기 v2 코드를 복사했어요.'
       );
     } catch {
       const textarea =
@@ -1632,7 +1630,7 @@
       textarea.remove();
 
       toast(
-        '수집기 코드를 복사했어요.'
+        '수집기 v2 코드를 복사했어요.'
       );
     }
   }
@@ -1688,7 +1686,7 @@
       <div class="modal">
         <div class="modal-head">
           <h2>
-            HTH X 수집기 설치
+            HTH X 수집기 v2 설치
           </h2>
 
           <button
@@ -1707,6 +1705,7 @@
             </b>
             만 읽어요.
             X 비밀번호나 로그인 정보는 가져오지 않습니다.
+            이미지가 늦게 로드되면 자동으로 다시 확인해요.
           </div>
 
           <div
@@ -1737,14 +1736,14 @@
               <div>
                 아래
                 <strong>
-                  HTH 수집
+                  HTH 수집 v2
                 </strong>
                 버튼을
                 북마크바로 끌어다 놓으세요.
 
                 <small>
-                  Chrome / Whale / Edge 등
-                  Chromium 브라우저 권장
+                  기존 HTH 수집 북마크가 있다면
+                  새 버튼으로 교체해 주세요.
                 </small>
               </div>
             </div>
@@ -1757,7 +1756,7 @@
                 id="collectorInstallBookmarklet"
                 href="#"
               >
-                ☷ HTH 수집
+                ☷ HTH 수집 v2
               </a>
             </div>
 
@@ -1770,14 +1769,14 @@
                 X 타래 첫 글을 연 뒤
                 북마크바의
                 <strong>
-                  HTH 수집
+                  HTH 수집 v2
                 </strong>
-                을 누르고,
-                타래 끝까지 스크롤하세요.
+                를 누르고,
+                타래 끝까지 천천히 스크롤하세요.
 
                 <small>
-                  마지막에 JSON 복사 →
-                  HTH 브라우저 가져오기에 붙여넣기
+                  포스트와 이미지 개수가 계속 올라가는지 확인한 뒤
+                  JSON 복사 → HTH 브라우저 가져오기에 붙여넣기
                 </small>
               </div>
             </div>
@@ -1835,7 +1834,7 @@
         'click',
         () => {
           localStorage.setItem(
-            'hth-collector-installed',
+            'hth-collector-installed-v2',
             '1'
           );
 
@@ -1849,7 +1848,7 @@
           }
 
           toast(
-            'HTH 수집기 설치 완료!'
+            'HTH 수집기 v2 설치 완료!'
           );
         }
       );
@@ -1879,7 +1878,7 @@
 
     const installed =
       localStorage.getItem(
-        'hth-collector-installed'
+        'hth-collector-installed-v2'
       ) ===
       '1';
 
@@ -1904,17 +1903,17 @@
             <div
               class="collector-install-eyebrow"
             >
-              X Collector
+              X Collector · v2
             </div>
 
             <h3>
-              HTH 수집기가 설치되어 있어요
+              HTH 수집기 v2가 설치되어 있어요
             </h3>
 
             <p>
               X에서 타래를 열고
-              북마크바의
-              ‘HTH 수집’을 누르면 됩니다.
+              북마크바의 ‘HTH 수집 v2’를 누르면 돼요.
+              타래를 스크롤하는 동안 늦게 뜨는 이미지도 다시 확인합니다.
             </p>
           </div>
 
@@ -1937,18 +1936,17 @@
             <div
               class="collector-install-eyebrow"
             >
-              X Collector · API 없이 무료
+              X Collector v2 · API 없이 무료
             </div>
 
             <h3>
-              긴 X 타래도 스크롤 한 번으로 백업해요
+              긴 X 타래와 이미지까지 스크롤 한 번으로 백업해요
             </h3>
 
             <p>
               HTH 수집기를 북마크바에 한 번만 추가하면,
-              X에서 타래를 끝까지 스크롤하며
-              포스트를 모을 수 있어요.
-              설치는 1분이면 끝나요.
+              X에서 타래를 끝까지 스크롤하며 포스트와 이미지 링크를 모을 수 있어요.
+              이미지가 늦게 뜨는 경우도 자동으로 재확인합니다.
             </p>
           </div>
 
@@ -1960,7 +1958,7 @@
               id="homeCollectorBookmarklet"
               href="#"
             >
-              ☷ HTH 수집
+              ☷ HTH 수집 v2
             </a>
 
             <button
@@ -4151,7 +4149,7 @@
 
               <br>
 
-              X에서 HTH 수집기를 실행하고
+              X에서 HTH 수집기 v2를 실행하고
               타래 끝까지 스크롤한 뒤,
               수집기가 복사해 준 JSON을
               아래 칸에 붙여넣어요.
