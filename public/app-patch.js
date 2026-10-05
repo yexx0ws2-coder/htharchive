@@ -6,6 +6,7 @@
     .media-link span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .media-link:hover{border-color:var(--accent,#9a8ed2)}
     .media-url-box textarea{min-height:76px;resize:vertical}
+    .thread-header .thread-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
     .thread-manage-posts{display:grid;gap:14px}
     .thread-manage-post{border:1px solid var(--line,#e8e5ee);border-radius:16px;padding:14px;display:grid;gap:12px;background:rgba(255,255,255,.35)}
     .thread-manage-post-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
