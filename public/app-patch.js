@@ -19,6 +19,22 @@
     .thread-manage-viewings .chip{cursor:pointer}
     .thread-manage-viewings input{margin-right:6px}
     .thread-manage-add-row{display:flex;gap:8px;flex-wrap:wrap}
+
+    .collector-json{min-height:210px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12px;line-height:1.6}
+    .collector-note{border:1px solid var(--line,#e8e5ee);border-radius:16px;padding:14px;background:var(--surface-2,#f7f6fa);font-size:12px;line-height:1.65;color:var(--muted,#777)}
+    .collector-note b{color:var(--text,#222)}
+    .collector-preview{display:grid;gap:10px}
+    .collector-post{border:1px solid var(--line,#e8e5ee);border-radius:16px;padding:14px;background:var(--surface,#fff);display:grid;gap:10px}
+    .collector-post[data-mode="context"]{background:color-mix(in srgb,var(--accent-soft,#efecff) 42%,var(--surface,#fff))}
+    .collector-post[data-mode="exclude"]{opacity:.55}
+    .collector-post-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .collector-post-meta{display:grid;gap:3px;min-width:0}
+    .collector-post-meta b{font-size:12px}
+    .collector-post-meta small{font-size:10px;color:var(--muted,#777);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .collector-post-body{white-space:pre-wrap;font-size:13px;line-height:1.72}
+    .collector-post-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted,#777);font-size:10px}
+    .collector-mode{border:1px solid var(--line,#e8e5ee);background:var(--surface,#fff);border-radius:10px;padding:7px 9px;font-size:11px}
+    .collector-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
   `;
   document.head.appendChild(patchStyle);
 
@@ -81,7 +97,10 @@
         text: post.text || '',
         context: Boolean(post.context),
         quote: post.quote
-          ? { author: post.quote.author || '', text: post.quote.text || '' }
+          ? {
+              author: post.quote.author || '',
+              text: post.quote.text || ''
+            }
           : null,
         media: (Array.isArray(post.media) ? post.media : [])
           .filter(item => /^https?:\/\//i.test(item?.src || ''))
@@ -96,50 +115,94 @@
       }))
     }));
 
-    return { accounts, workCast, viewings, threads };
+    return {
+      accounts,
+      workCast,
+      viewings,
+      threads
+    };
   }
 
   async function pushArchiveSnapshot(payload) {
     const response = await fetch('/api/archive', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-      let message = '기록을 서버에 저장하지 못했어요.';
+      let message =
+        '기록을 서버에 저장하지 못했어요.';
+
       try {
-        const data = await response.json();
-        if (data?.error) message = data.error;
+        const data =
+          await response.json();
+
+        if (data?.error) {
+          message =
+            data.error;
+        }
       } catch {}
-      throw new Error(message);
+
+      throw new Error(
+        message
+      );
     }
   }
 
   function queueArchiveSync() {
-    if (!archiveReady) return;
-    const payload = JSON.parse(JSON.stringify(cleanArchivePayload()));
+    if (!archiveReady) {
+      return;
+    }
 
-    archiveSyncQueue = archiveSyncQueue
-      .catch(() => {})
-      .then(() => pushArchiveSnapshot(payload))
-      .then(() => {
-        archiveSyncErrorShown = false;
-      })
-      .catch(error => {
-        console.error('HTH D1 sync failed:', error);
-        if (!archiveSyncErrorShown) {
-          archiveSyncErrorShown = true;
-          toast('서버 저장에 실패했어요. 인터넷 연결 후 다시 저장해 주세요.');
-        }
-      });
+    const payload =
+      JSON.parse(
+        JSON.stringify(
+          cleanArchivePayload()
+        )
+      );
+
+    archiveSyncQueue =
+      archiveSyncQueue
+        .catch(() => {})
+        .then(() =>
+          pushArchiveSnapshot(
+            payload
+          )
+        )
+        .then(() => {
+          archiveSyncErrorShown =
+            false;
+        })
+        .catch(error => {
+          console.error(
+            'HTH D1 sync failed:',
+            error
+          );
+
+          if (
+            !archiveSyncErrorShown
+          ) {
+            archiveSyncErrorShown =
+              true;
+
+            toast(
+              '서버 저장에 실패했어요. 인터넷 연결 후 다시 저장해 주세요.'
+            );
+          }
+        });
   }
 
   persist = function() {
     try {
       localPersist();
     } catch (error) {
-      console.error('HTH local cache save failed:', error);
+      console.error(
+        'HTH local cache save failed:',
+        error
+      );
     }
 
     queueArchiveSync();
@@ -148,7 +211,11 @@
   async function hydrateArchiveFromD1() {
     try {
       while (
-        document.documentElement.classList.contains('hth-auth-pending')
+        document.documentElement
+          .classList
+          .contains(
+            'hth-auth-pending'
+          )
       ) {
         await sleep(60);
       }
@@ -156,54 +223,95 @@
       await sleep(180);
       await loadWorksFromDB();
 
-      const response = await fetch('/api/archive');
+      const response =
+        await fetch(
+          '/api/archive'
+        );
 
       if (!response.ok) {
-        throw new Error('서버 기록을 불러오지 못했어요.');
+        throw new Error(
+          '서버 기록을 불러오지 못했어요.'
+        );
       }
 
-      const archive = await response.json();
+      const archive =
+        await response.json();
 
-      state.accounts = Array.isArray(archive.accounts)
-        ? archive.accounts
-        : [];
+      state.accounts =
+        Array.isArray(
+          archive.accounts
+        )
+          ? archive.accounts
+          : [];
 
-      state.viewings = Array.isArray(archive.viewings)
-        ? archive.viewings
-        : [];
+      state.viewings =
+        Array.isArray(
+          archive.viewings
+        )
+          ? archive.viewings
+          : [];
 
-      state.threads = Array.isArray(archive.threads)
-        ? archive.threads
-        : [];
+      state.threads =
+        Array.isArray(
+          archive.threads
+        )
+          ? archive.threads
+          : [];
 
-      const castByWork = new Map();
+      const castByWork =
+        new Map();
 
       for (
-        const item of Array.isArray(archive.workCast)
+        const item of
+        Array.isArray(
+          archive.workCast
+        )
           ? archive.workCast
           : []
       ) {
-        const key = String(item.workId);
+        const key =
+          String(
+            item.workId
+          );
 
-        if (!castByWork.has(key)) {
-          castByWork.set(key, []);
+        if (
+          !castByWork.has(
+            key
+          )
+        ) {
+          castByWork.set(
+            key,
+            []
+          );
         }
 
-        castByWork.get(key).push({
-          actor: item.actor || '',
-          role: item.role || ''
-        });
+        castByWork
+          .get(key)
+          .push({
+            actor:
+              item.actor || '',
+            role:
+              item.role || ''
+          });
       }
 
-      state.works = state.works.map(work => ({
-        ...work,
-        castPool:
-          work.id === 'etc'
-            ? []
-            : castByWork.get(String(work.id)) || []
-      }));
+      state.works =
+        state.works.map(
+          work => ({
+            ...work,
+            castPool:
+              work.id === 'etc'
+                ? []
+                : castByWork.get(
+                    String(
+                      work.id
+                    )
+                  ) || []
+          })
+        );
 
-      archiveReady = true;
+      archiveReady =
+        true;
 
       try {
         localPersist();
@@ -216,84 +324,445 @@
 
       render();
     } catch (error) {
-      console.error('HTH D1 hydrate failed:', error);
-      toast('서버 기록을 불러오지 못했어요.');
+      console.error(
+        'HTH D1 hydrate failed:',
+        error
+      );
+
+      toast(
+        '서버 기록을 불러오지 못했어요.'
+      );
     }
   }
 
-  function parseMediaUrls(raw = '') {
-    const lines = raw
-      .split(/\n+/)
-      .map(x => x.trim())
-      .filter(Boolean);
+  function parseMediaUrls(
+    raw = ''
+  ) {
+    const lines =
+      raw
+        .split(/\n+/)
+        .map(
+          x =>
+            x.trim()
+        )
+        .filter(
+          Boolean
+        );
 
-    if (lines.length > 4) {
+    if (
+      lines.length > 4
+    ) {
       toast(
         '이미지 링크는 한 포스트에 최대 4개까지 저장할 수 있어요.'
       );
+
       return null;
     }
 
-    const invalid = lines.find(
-      url => !/^https?:\/\/\S+$/i.test(url)
-    );
+    const invalid =
+      lines.find(
+        url =>
+          !/^https?:\/\/\S+$/i.test(
+            url
+          )
+      );
 
     if (invalid) {
       toast(
         '이미지 링크는 http:// 또는 https:// 주소로 입력해 주세요.'
       );
+
       return null;
     }
 
-    return lines.map((url, i) => ({
-      id: `link-${Date.now()}-${i}-${Math.random()
-        .toString(36)
-        .slice(2, 7)}`,
-      type: 'link',
-      src: url,
-      alt: `이미지 링크 ${i + 1}`,
-      source: 'url',
-      order: i
-    }));
+    return lines.map(
+      (url, i) => ({
+        id:
+          `link-${Date.now()}-${i}-${Math.random()
+            .toString(36)
+            .slice(2, 7)}`,
+        type:
+          'link',
+        src:
+          url,
+        alt:
+          `이미지 링크 ${i + 1}`,
+        source:
+          'url',
+        order:
+          i
+      })
+    );
   }
 
-  mediaGrid = function(media = []) {
-    const links = media
-      .filter(item =>
-        /^https?:\/\//i.test(item?.src || '')
-      )
-      .slice(0, 4);
+  function collectorHandle(
+    value = ''
+  ) {
+    const raw =
+      String(
+        value || ''
+      ).trim();
 
-    if (!links.length) return '';
+    if (!raw) {
+      return '';
+    }
+
+    const match =
+      raw.match(
+        /@?([A-Za-z0-9_]{1,15})/
+      );
+
+    return match
+      ? `@${match[1]}`
+      : cleanHandle(
+          raw
+        );
+  }
+
+  function normalizeCollectorMedia(
+    value
+  ) {
+    const list =
+      Array.isArray(
+        value
+      )
+        ? value
+        : [];
+
+    const urls = [];
+
+    for (
+      const item of list
+    ) {
+      const url =
+        typeof item ===
+        'string'
+          ? item.trim()
+          : String(
+              item?.url ||
+                item?.src ||
+                ''
+            ).trim();
+
+      if (
+        /^https?:\/\/\S+$/i.test(
+          url
+        ) &&
+        !urls.includes(
+          url
+        )
+      ) {
+        urls.push(
+          url
+        );
+      }
+
+      if (
+        urls.length >= 4
+      ) {
+        break;
+      }
+    }
+
+    return urls;
+  }
+
+  function normalizeCollectorQuote(
+    value
+  ) {
+    if (
+      !value ||
+      typeof value !==
+        'object'
+    ) {
+      return null;
+    }
+
+    const text =
+      String(
+        value.text ||
+          value.body ||
+          ''
+      ).trim();
+
+    if (!text) {
+      return null;
+    }
+
+    return {
+      author:
+        collectorHandle(
+          value.author ||
+            value.handle ||
+            ''
+        ),
+      text
+    };
+  }
+
+  function parseCollectorPayload(
+    raw
+  ) {
+    let parsed;
+
+    try {
+      parsed =
+        JSON.parse(
+          raw
+        );
+    } catch {
+      throw new Error(
+        '수집 데이터가 JSON 형식이 아니에요.'
+      );
+    }
+
+    const sourcePosts =
+      Array.isArray(
+        parsed
+      )
+        ? parsed
+        : Array.isArray(
+            parsed?.posts
+          )
+          ? parsed.posts
+          : [];
+
+    if (
+      !sourcePosts.length
+    ) {
+      throw new Error(
+        '수집된 포스트가 없어요.'
+      );
+    }
+
+    const seen =
+      new Set();
+
+    const posts = [];
+
+    for (
+      const item of
+      sourcePosts
+    ) {
+      if (
+        !item ||
+        typeof item !==
+          'object'
+      ) {
+        continue;
+      }
+
+      const text =
+        String(
+          item.text ||
+            item.body ||
+            ''
+        ).trim();
+
+      const url =
+        String(
+          item.url ||
+            item.href ||
+            ''
+        ).trim();
+
+      const id =
+        String(
+          item.id ||
+            item.statusId ||
+            ''
+        ).trim();
+
+      const author =
+        collectorHandle(
+          item.author ||
+            item.handle ||
+            item.username ||
+            ''
+        );
+
+      const createdAt =
+        String(
+          item.createdAt ||
+            item.datetime ||
+            item.date ||
+            ''
+        ).trim();
+
+      if (!text) {
+        continue;
+      }
+
+      const dedupeKey =
+        id ||
+        url ||
+        `${author}|${createdAt}|${text}`;
+
+      if (
+        seen.has(
+          dedupeKey
+        )
+      ) {
+        continue;
+      }
+
+      seen.add(
+        dedupeKey
+      );
+
+      posts.push({
+        id,
+        url:
+          /^https?:\/\//i.test(
+            url
+          )
+            ? url
+            : '',
+        author,
+        text,
+        createdAt,
+        media:
+          normalizeCollectorMedia(
+            item.media ||
+              item.images ||
+              []
+          ),
+        quote:
+          normalizeCollectorQuote(
+            item.quote ||
+              item.quoted ||
+              null
+          )
+      });
+    }
+
+    if (
+      !posts.length
+    ) {
+      throw new Error(
+        '본문이 있는 포스트를 찾지 못했어요.'
+      );
+    }
+
+    return {
+      version:
+        parsed?.version ||
+        1,
+
+      pageUrl:
+        /^https?:\/\//i.test(
+          String(
+            parsed?.pageUrl ||
+              ''
+          )
+        )
+          ? String(
+              parsed.pageUrl
+            )
+          : '',
+
+      collectedAt:
+        String(
+          parsed?.collectedAt ||
+            ''
+        ),
+
+      posts
+    };
+  }
+
+  function mediaFromCollector(
+    urls
+  ) {
+    return normalizeCollectorMedia(
+      urls
+    ).map(
+      (url, index) => ({
+        id:
+          `x-link-${Date.now()}-${index}-${Math.random()
+            .toString(36)
+            .slice(2, 7)}`,
+        type:
+          'link',
+        src:
+          url,
+        alt:
+          `X 첨부 이미지 링크 ${index + 1}`,
+        source:
+          'url',
+        order:
+          index
+      })
+    );
+  }
+
+  mediaGrid = function(
+    media = []
+  ) {
+    const links =
+      media
+        .filter(
+          item =>
+            /^https?:\/\//i.test(
+              item?.src ||
+                ''
+            )
+        )
+        .slice(
+          0,
+          4
+        );
+
+    if (
+      !links.length
+    ) {
+      return '';
+    }
 
     return `
       <div class="media-link-list">
         ${links
           .map(
-            (item, i) => `
-          <a
-            class="media-link"
-            href="${esc(item.src)}"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            <span>이미지 링크 ${i + 1}</span>
-            <span>↗</span>
-          </a>
-        `
+            (
+              item,
+              i
+            ) => `
+              <a
+                class="media-link"
+                href="${esc(
+                  item.src
+                )}"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <span>
+                  이미지 링크 ${i + 1}
+                </span>
+                <span>↗</span>
+              </a>
+            `
           )
           .join('')}
       </div>
     `;
   };
 
-  threadCard = function(t) {
-    const w = workBy(t.workId);
+  threadCard = function(
+    t
+  ) {
+    const w =
+      workBy(
+        t.workId
+      );
 
     const first =
-      t.posts.find(p => p.owner)?.text || '';
+      t.posts.find(
+        p => p.owner
+      )?.text ||
+      '';
 
-    const linkCount = mediaCount(t);
+    const linkCount =
+      mediaCount(t);
 
     return `
       <button
@@ -303,28 +772,54 @@
         <span class="thread-card-content">
           <span class="thread-top">
             <span class="work-label">
-              ${esc(w?.title || '미분류')}
+              ${esc(
+                w?.title ||
+                  '미분류'
+              )}
             </span>
 
             <span class="count-badge">
-              ${t.posts.filter(p => p.owner).length} posts
-              ${linkCount ? ` · 🔗 ${linkCount}` : ''}
+              ${
+                t.posts.filter(
+                  p =>
+                    p.owner
+                ).length
+              } posts
+              ${
+                linkCount
+                  ? ` · 🔗 ${linkCount}`
+                  : ''
+              }
             </span>
           </span>
 
-          <h4>${esc(t.title)}</h4>
-          <p>${esc(first)}</p>
+          <h4>
+            ${esc(
+              t.title
+            )}
+          </h4>
+
+          <p>
+            ${esc(
+              first
+            )}
+          </p>
 
           <span class="thread-foot">
             <span>
-              ${esc(t.author)} ·
-              ${fmtLongDate(t.createdAt)}
+              ${esc(
+                t.author
+              )} ·
+              ${fmtLongDate(
+                t.createdAt
+              )}
             </span>
 
             <span>
               ${
-                t.source === 'x'
-                  ? 'X 링크'
+                t.source ===
+                'x'
+                  ? 'X 수집'
                   : '직접 추가'
               }
             </span>
@@ -334,28 +829,48 @@
     `;
   };
 
-  renderThread = function(id, focus) {
-    const t = state.threads.find(
-      x => x.id === id
-    );
+  renderThread = function(
+    id,
+    focus
+  ) {
+    const t =
+      state.threads.find(
+        x =>
+          x.id === id
+      );
 
     if (!t) {
-      routeTo('home');
+      routeTo(
+        'home'
+      );
+
       return;
     }
 
     const w =
-      workBy(t.workId) ||
-      workBy('etc') || {
-        id: 'etc',
-        title: '미분류'
+      workBy(
+        t.workId
+      ) ||
+      workBy(
+        'etc'
+      ) || {
+        id:
+          'etc',
+        title:
+          '미분류'
       };
 
-    const linkedViewings = (
-      t.viewingIds || []
-    )
-      .map(viewingBy)
-      .filter(Boolean);
+    const linkedViewings =
+      (
+        t.viewingIds ||
+        []
+      )
+        .map(
+          viewingBy
+        )
+        .filter(
+          Boolean
+        );
 
     const backButton =
       w.id === 'etc'
@@ -372,7 +887,9 @@
             class="detail-back"
             data-work="${w.id}"
           >
-            ‹ ${esc(w.title)}
+            ‹ ${esc(
+              w.title
+            )}
           </button>
         `;
 
@@ -383,7 +900,10 @@
         <div class="thread-header">
           <div class="thread-top">
             <span class="work-label">
-              ${esc(w.title || '미분류')}
+              ${esc(
+                w.title ||
+                  '미분류'
+              )}
             </span>
 
             <div class="toolbar">
@@ -399,7 +919,9 @@
                   ? `
                     <a
                       class="btn"
-                      href="${esc(t.urls[0])}"
+                      href="${esc(
+                        t.urls[0]
+                      )}"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -411,13 +933,24 @@
             </div>
           </div>
 
-          <h1>${esc(t.title)}</h1>
+          <h1>
+            ${esc(
+              t.title
+            )}
+          </h1>
 
           <div class="meta">
-            ${esc(t.author)} ·
-            ${fmtLongDate(t.createdAt)} ·
+            ${esc(
+              t.author
+            )} ·
+            ${fmtLongDate(
+              t.createdAt
+            )} ·
             ${
-              t.posts.filter(p => p.owner).length
+              t.posts.filter(
+                p =>
+                  p.owner
+              ).length
             } posts
           </div>
 
@@ -431,11 +964,16 @@
                   ${linkedViewings
                     .map(
                       v => `
-                    <span class="chip mint">
-                      ${fmtDate(v.date)}
-                      ${esc(v.session || '')}
-                    </span>
-                  `
+                        <span class="chip mint">
+                          ${fmtDate(
+                            v.date
+                          )}
+                          ${esc(
+                            v.session ||
+                              ''
+                          )}
+                        </span>
+                      `
                     )
                     .join('')}
                 </div>
@@ -446,8 +984,16 @@
 
         <div class="thread-posts">
           ${t.posts
-            .map((p, i) =>
-              postView(p, i, focus)
+            .map(
+              (
+                p,
+                i
+              ) =>
+                postView(
+                  p,
+                  i,
+                  focus
+                )
             )
             .join('')}
         </div>
@@ -456,12 +1002,18 @@
 
     bindCommon();
 
-    $('#manageThread')?.addEventListener(
-      'click',
-      () => openThreadManager(t.id)
-    );
+    $('#manageThread')
+      ?.addEventListener(
+        'click',
+        () =>
+          openThreadManager(
+            t.id
+          )
+      );
 
-    if (focus != null) {
+    if (
+      focus != null
+    ) {
       setTimeout(
         () =>
           document
@@ -469,119 +1021,214 @@
               `[data-post-index="${focus}"]`
             )
             ?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
+              behavior:
+                'smooth',
+              block:
+                'center'
             }),
         200
       );
     }
   };
 
-  function threadDateValue(createdAt) {
-    const raw = String(createdAt || '');
+  function threadDateValue(
+    createdAt
+  ) {
+    const raw =
+      String(
+        createdAt ||
+          ''
+      );
 
-    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
-      return raw.slice(0, 10);
+    if (
+      /^\d{4}-\d{2}-\d{2}/.test(
+        raw
+      )
+    ) {
+      return raw.slice(
+        0,
+        10
+      );
     }
 
-    const d = new Date(
-      createdAt || Date.now()
-    );
+    const d =
+      new Date(
+        createdAt ||
+          Date.now()
+      );
 
-    if (Number.isNaN(d.getTime())) {
+    if (
+      Number.isNaN(
+        d.getTime()
+      )
+    ) {
       return new Date()
         .toISOString()
-        .slice(0, 10);
+        .slice(
+          0,
+          10
+        );
     }
 
     return `${d.getFullYear()}-${String(
       d.getMonth() + 1
-    ).padStart(2, '0')}-${String(
+    ).padStart(
+      2,
+      '0'
+    )}-${String(
       d.getDate()
-    ).padStart(2, '0')}`;
+    ).padStart(
+      2,
+      '0'
+    )}`;
   }
 
-  function managerDraftFromPost(post) {
-    const owner = Boolean(post.owner);
+  function managerDraftFromPost(
+    post
+  ) {
+    const owner =
+      Boolean(
+        post.owner
+      );
 
     return {
       owner,
-      text: post.text || '',
-      author: post.author || '',
-      quoteAuthor: owner
-        ? post.quote?.author || ''
-        : '',
-      quoteText: owner
-        ? post.quote?.text || ''
-        : '',
-      mediaRaw: owner
-        ? (
-            Array.isArray(post.media)
-              ? post.media
-              : []
-          )
-            .filter(item =>
-              /^https?:\/\//i.test(
-                item?.src || ''
+      text:
+        post.text ||
+        '',
+      author:
+        post.author ||
+        '',
+      quoteAuthor:
+        owner
+          ? post.quote
+              ?.author ||
+            ''
+          : '',
+      quoteText:
+        owner
+          ? post.quote
+              ?.text ||
+            ''
+          : '',
+      mediaRaw:
+        owner
+          ? (
+              Array.isArray(
+                post.media
               )
+                ? post.media
+                : []
             )
-            .slice(0, 4)
-            .map(item => item.src)
-            .join('\n')
-        : ''
+              .filter(
+                item =>
+                  /^https?:\/\//i.test(
+                    item?.src ||
+                      ''
+                  )
+              )
+              .slice(
+                0,
+                4
+              )
+              .map(
+                item =>
+                  item.src
+              )
+              .join(
+                '\n'
+              )
+          : ''
     };
   }
 
-  function openThreadManager(threadId) {
-    const t = state.threads.find(
-      x => x.id === threadId
-    );
+  function openThreadManager(
+    threadId
+  ) {
+    const t =
+      state.threads.find(
+        x =>
+          x.id ===
+          threadId
+      );
 
     if (!t) {
-      toast('타래를 찾지 못했어요.');
+      toast(
+        '타래를 찾지 못했어요.'
+      );
+
       return;
     }
 
-    let draftPosts = (
-      t.posts || []
-    ).map(managerDraftFromPost);
+    let draftPosts =
+      (
+        t.posts ||
+        []
+      ).map(
+        managerDraftFromPost
+      );
 
-    let selectedViewingIds = new Set(
-      Array.isArray(t.viewingIds)
-        ? t.viewingIds.map(String)
-        : []
-    );
+    let selectedViewingIds =
+      new Set(
+        Array.isArray(
+          t.viewingIds
+        )
+          ? t.viewingIds.map(
+              String
+            )
+          : []
+      );
 
-    const workOptions = [
-      state.works.find(
-        w => w.id === 'etc'
-      ),
-      ...state.works.filter(
-        w => w.id !== 'etc'
-      )
-    ]
-      .filter(Boolean)
-      .map(
-        w => `
-          <option
-            value="${esc(String(w.id))}"
-            ${
-              String(w.id) ===
-              String(t.workId)
-                ? 'selected'
-                : ''
-            }
-          >
-            ${esc(w.title)}
-          </option>
-        `
-      )
-      .join('');
+    const workOptions =
+      [
+        state.works.find(
+          w =>
+            w.id ===
+            'etc'
+        ),
+
+        ...state.works.filter(
+          w =>
+            w.id !==
+            'etc'
+        )
+      ]
+        .filter(
+          Boolean
+        )
+        .map(
+          w => `
+            <option
+              value="${esc(
+                String(
+                  w.id
+                )
+              )}"
+              ${
+                String(
+                  w.id
+                ) ===
+                String(
+                  t.workId
+                )
+                  ? 'selected'
+                  : ''
+              }
+            >
+              ${esc(
+                w.title
+              )}
+            </option>
+          `
+        )
+        .join('');
 
     modalLayer.innerHTML = `
       <div class="modal">
         <div class="modal-head">
-          <h2>타래 관리</h2>
+          <h2>
+            타래 관리
+          </h2>
 
           <button
             class="close-btn"
@@ -594,20 +1241,27 @@
         <div class="modal-body">
           <div class="form-grid">
             <div class="field">
-              <label>타래 제목</label>
+              <label>
+                타래 제목
+              </label>
 
               <input
                 id="manageThreadTitle"
                 value="${esc(
-                  t.title || ''
+                  t.title ||
+                    ''
                 )}"
               >
             </div>
 
             <div class="field">
-              <label>작품</label>
+              <label>
+                작품
+              </label>
 
-              <select id="manageThreadWork">
+              <select
+                id="manageThreadWork"
+              >
                 ${workOptions}
               </select>
 
@@ -618,19 +1272,24 @@
             </div>
 
             <div class="field">
-              <label>작성 계정</label>
+              <label>
+                작성 계정
+              </label>
 
               <input
                 id="manageThreadAuthor"
                 value="${esc(
-                  t.author || ''
+                  t.author ||
+                    ''
                 )}"
                 placeholder="@계정"
               >
             </div>
 
             <div class="field">
-              <label>작성일</label>
+              <label>
+                작성일
+              </label>
 
               <input
                 id="manageThreadDate"
@@ -642,7 +1301,9 @@
             </div>
 
             <div class="field">
-              <label>관극 연결</label>
+              <label>
+                관극 연결
+              </label>
 
               <div
                 id="manageThreadViewings"
@@ -651,14 +1312,18 @@
             </div>
 
             <div class="field">
-              <label>포스트</label>
+              <label>
+                포스트
+              </label>
 
               <div
                 id="manageThreadPosts"
                 class="thread-manage-posts"
               ></div>
 
-              <div class="thread-manage-add-row">
+              <div
+                class="thread-manage-add-row"
+              >
                 <button
                   type="button"
                   class="btn"
@@ -677,7 +1342,9 @@
               </div>
             </div>
 
-            <div class="thread-manage-danger">
+            <div
+              class="thread-manage-danger"
+            >
               <button
                 type="button"
                 class="btn"
@@ -686,7 +1353,9 @@
                 타래 삭제
               </button>
 
-              <div class="footer-actions">
+              <div
+                class="footer-actions"
+              >
                 <button
                   type="button"
                   class="btn"
@@ -712,240 +1381,330 @@
     bindModalClose();
 
     function syncDraftPostsFromDom() {
-      $$('#manageThreadPosts .thread-manage-post')
-        .forEach(box => {
-          const index = Number(
-            box.dataset.index
-          );
+      $$(
+        '#manageThreadPosts .thread-manage-post'
+      ).forEach(
+        box => {
+          const index =
+            Number(
+              box.dataset
+                .index
+            );
 
           const draft =
-            draftPosts[index];
+            draftPosts[
+              index
+            ];
 
-          if (!draft) return;
+          if (!draft) {
+            return;
+          }
 
           draft.text =
-            $('.manage-post-text', box)
-              ?.value ?? '';
+            $(
+              '.manage-post-text',
+              box
+            )?.value ??
+            '';
 
-          if (draft.owner) {
+          if (
+            draft.owner
+          ) {
             draft.quoteAuthor =
-              $('.manage-quote-author', box)
-                ?.value ?? '';
+              $(
+                '.manage-quote-author',
+                box
+              )?.value ??
+              '';
 
             draft.quoteText =
-              $('.manage-quote-text', box)
-                ?.value ?? '';
+              $(
+                '.manage-quote-text',
+                box
+              )?.value ??
+              '';
 
             draft.mediaRaw =
-              $('.manage-media-urls', box)
-                ?.value ?? '';
+              $(
+                '.manage-media-urls',
+                box
+              )?.value ??
+              '';
           } else {
             draft.author =
-              $('.manage-context-author', box)
-                ?.value ?? '';
+              $(
+                '.manage-context-author',
+                box
+              )?.value ??
+              '';
           }
-        });
+        }
+      );
     }
 
     function renderPostEditors() {
       const host =
-        $('#manageThreadPosts');
+        $(
+          '#manageThreadPosts'
+        );
 
-      host.innerHTML = draftPosts.length
-        ? draftPosts
-            .map((p, index) =>
-              p.owner
-                ? `
-                  <div
-                    class="thread-manage-post"
-                    data-index="${index}"
-                  >
-                    <div class="thread-manage-post-head">
-                      <b>
-                        POST ${
-                          index + 1
-                        } · 내 원문
-                      </b>
-
-                      <button
-                        type="button"
-                        class="mini-btn"
-                        data-manager-remove="${index}"
+      host.innerHTML =
+        draftPosts.length
+          ? draftPosts
+              .map(
+                (
+                  p,
+                  index
+                ) =>
+                  p.owner
+                    ? `
+                      <div
+                        class="thread-manage-post"
+                        data-index="${index}"
                       >
-                        삭제
-                      </button>
-                    </div>
+                        <div
+                          class="thread-manage-post-head"
+                        >
+                          <b>
+                            POST ${index + 1}
+                            · 내 원문
+                          </b>
 
-                    <div class="field">
-                      <label>본문</label>
+                          <button
+                            type="button"
+                            class="mini-btn"
+                            data-manager-remove="${index}"
+                          >
+                            삭제
+                          </button>
+                        </div>
 
-                      <textarea
-                        class="manage-post-text"
-                      >${esc(
-                        p.text
-                      )}</textarea>
-                    </div>
+                        <div
+                          class="field"
+                        >
+                          <label>
+                            본문
+                          </label>
 
-                    <div class="field media-url-box">
-                      <label>
-                        이미지 링크
-                      </label>
+                          <textarea
+                            class="manage-post-text"
+                          >${esc(
+                            p.text
+                          )}</textarea>
+                        </div>
 
-                      <textarea
-                        class="manage-media-urls"
-                        placeholder="https://..."
-                      >${esc(
-                        p.mediaRaw
-                      )}</textarea>
+                        <div
+                          class="field media-url-box"
+                        >
+                          <label>
+                            이미지 링크
+                          </label>
 
-                      <span class="field-hint">
-                        한 줄에 하나씩, 최대 4개.
-                      </span>
-                    </div>
+                          <textarea
+                            class="manage-media-urls"
+                            placeholder="https://..."
+                          >${esc(
+                            p.mediaRaw
+                          )}</textarea>
 
-                    <div class="field">
-                      <label>
-                        인용 작성자 (선택)
-                      </label>
+                          <span
+                            class="field-hint"
+                          >
+                            한 줄에 하나씩, 최대 4개.
+                          </span>
+                        </div>
 
-                      <input
-                        class="manage-quote-author"
-                        value="${esc(
-                          p.quoteAuthor
-                        )}"
+                        <div
+                          class="field"
+                        >
+                          <label>
+                            인용 작성자 (선택)
+                          </label>
+
+                          <input
+                            class="manage-quote-author"
+                            value="${esc(
+                              p.quoteAuthor
+                            )}"
+                          >
+                        </div>
+
+                        <div
+                          class="field"
+                        >
+                          <label>
+                            인용 내용 (선택)
+                          </label>
+
+                          <textarea
+                            class="manage-quote-text"
+                          >${esc(
+                            p.quoteText
+                          )}</textarea>
+                        </div>
+                      </div>
+                    `
+                    : `
+                      <div
+                        class="thread-manage-post"
+                        data-index="${index}"
                       >
-                    </div>
+                        <div
+                          class="thread-manage-post-head"
+                        >
+                          <b>
+                            POST ${index + 1}
+                            · 맥락 답글
+                          </b>
 
-                    <div class="field">
-                      <label>
-                        인용 내용 (선택)
-                      </label>
+                          <button
+                            type="button"
+                            class="mini-btn"
+                            data-manager-remove="${index}"
+                          >
+                            삭제
+                          </button>
+                        </div>
 
-                      <textarea
-                        class="manage-quote-text"
-                      >${esc(
-                        p.quoteText
-                      )}</textarea>
-                    </div>
-                  </div>
-                `
-                : `
-                  <div
-                    class="thread-manage-post"
-                    data-index="${index}"
-                  >
-                    <div class="thread-manage-post-head">
-                      <b>
-                        POST ${
-                          index + 1
-                        } · 맥락 답글
-                      </b>
+                        <div
+                          class="field"
+                        >
+                          <label>
+                            작성자
+                          </label>
 
-                      <button
-                        type="button"
-                        class="mini-btn"
-                        data-manager-remove="${index}"
-                      >
-                        삭제
-                      </button>
-                    </div>
+                          <input
+                            class="manage-context-author"
+                            value="${esc(
+                              p.author
+                            )}"
+                            placeholder="@아이디"
+                          >
+                        </div>
 
-                    <div class="field">
-                      <label>작성자</label>
+                        <div
+                          class="field"
+                        >
+                          <label>
+                            본문
+                          </label>
 
-                      <input
-                        class="manage-context-author"
-                        value="${esc(
-                          p.author
-                        )}"
-                        placeholder="@아이디"
-                      >
-                    </div>
-
-                    <div class="field">
-                      <label>본문</label>
-
-                      <textarea
-                        class="manage-post-text"
-                      >${esc(
-                        p.text
-                      )}</textarea>
-                    </div>
-                  </div>
-                `
-            )
-            .join('')
-        : `
-          <div class="empty">
-            포스트가 없어요.
-            아래 버튼으로 추가해 주세요.
-          </div>
-        `;
+                          <textarea
+                            class="manage-post-text"
+                          >${esc(
+                            p.text
+                          )}</textarea>
+                        </div>
+                      </div>
+                    `
+              )
+              .join('')
+          : `
+            <div class="empty">
+              포스트가 없어요.
+              아래 버튼으로 추가해 주세요.
+            </div>
+          `;
 
       $$(
         '[data-manager-remove]',
         host
-      ).forEach(button => {
-        button.addEventListener(
-          'click',
-          () => {
-            syncDraftPostsFromDom();
+      ).forEach(
+        button => {
+          button.addEventListener(
+            'click',
+            () => {
+              syncDraftPostsFromDom();
 
-            draftPosts.splice(
-              Number(
-                button.dataset
-                  .managerRemove
-              ),
-              1
-            );
+              draftPosts.splice(
+                Number(
+                  button.dataset
+                    .managerRemove
+                ),
+                1
+              );
 
-            renderPostEditors();
-          }
-        );
-      });
+              renderPostEditors();
+            }
+          );
+        }
+      );
     }
 
     function captureViewingChecks() {
-      selectedViewingIds = new Set(
-        $$(
-          '#manageThreadViewings input[name="threadViewing"]:checked'
-        ).map(input => input.value)
-      );
+      selectedViewingIds =
+        new Set(
+          $$(
+            '#manageThreadViewings input[name="threadViewing"]:checked'
+          ).map(
+            input =>
+              input.value
+          )
+        );
     }
 
     function renderViewingChoices() {
       const workId =
-        $('#manageThreadWork').value;
+        $('#manageThreadWork')
+          .value;
 
-      const list = (
-        state.viewings || []
-      )
-        .filter(
-          v =>
-            String(v.workId) ===
-            String(workId)
+      const list =
+        (
+          state.viewings ||
+          []
         )
-        .sort((a, b) =>
-          String(b.date || '').localeCompare(
-            String(a.date || '')
+          .filter(
+            v =>
+              String(
+                v.workId
+              ) ===
+              String(
+                workId
+              )
           )
-        );
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              String(
+                b.date ||
+                  ''
+              ).localeCompare(
+                String(
+                  a.date ||
+                    ''
+                )
+              )
+          );
 
-      const validIds = new Set(
-        list.map(v => String(v.id))
-      );
-
-      selectedViewingIds =
+      const validIds =
         new Set(
-          [...selectedViewingIds].filter(
-            id =>
-              validIds.has(
-                String(id)
+          list.map(
+            v =>
+              String(
+                v.id
               )
           )
         );
 
-      $('#manageThreadViewings').innerHTML =
+      selectedViewingIds =
+        new Set(
+          [
+            ...selectedViewingIds
+          ].filter(
+            id =>
+              validIds.has(
+                String(
+                  id
+                )
+              )
+          )
+        );
+
+      $(
+        '#manageThreadViewings'
+      ).innerHTML =
         list.length
           ? list
               .map(
@@ -955,19 +1714,28 @@
                       type="checkbox"
                       name="threadViewing"
                       value="${esc(
-                        String(v.id)
+                        String(
+                          v.id
+                        )
                       )}"
                       ${
                         selectedViewingIds.has(
-                          String(v.id)
+                          String(
+                            v.id
+                          )
                         )
                           ? 'checked'
                           : ''
                       }
                     >
 
-                    ${fmtDate(v.date)}
-                    ${esc(v.session || '')}
+                    ${fmtDate(
+                      v.date
+                    )}
+                    ${esc(
+                      v.session ||
+                        ''
+                    )}
 
                     ${
                       v.theater ||
@@ -983,7 +1751,9 @@
               )
               .join('')
           : `
-            <span class="field-hint">
+            <span
+              class="field-hint"
+            >
               이 작품에 연결할 관극이 없어요.
             </span>
           `;
@@ -1008,12 +1778,18 @@
           syncDraftPostsFromDom();
 
           draftPosts.push({
-            owner: true,
-            text: '',
-            author: '',
-            quoteAuthor: '',
-            quoteText: '',
-            mediaRaw: ''
+            owner:
+              true,
+            text:
+              '',
+            author:
+              '',
+            quoteAuthor:
+              '',
+            quoteText:
+              '',
+            mediaRaw:
+              ''
           });
 
           renderPostEditors();
@@ -1037,12 +1813,18 @@
           syncDraftPostsFromDom();
 
           draftPosts.push({
-            owner: false,
-            text: '',
-            author: '',
-            quoteAuthor: '',
-            quoteText: '',
-            mediaRaw: ''
+            owner:
+              false,
+            text:
+              '',
+            author:
+              '',
+            quoteAuthor:
+              '',
+            quoteText:
+              '',
+            mediaRaw:
+              ''
           });
 
           renderPostEditors();
@@ -1066,60 +1848,80 @@
           syncDraftPostsFromDom();
           captureViewingChecks();
 
-          if (!draftPosts.length) {
+          if (
+            !draftPosts.length
+          ) {
             toast(
               '포스트를 한 개 이상 남겨 주세요.'
             );
+
             return;
           }
 
           if (
             draftPosts.some(
-              p => !p.text.trim()
+              p =>
+                !p.text.trim()
             )
           ) {
             toast(
               '빈 포스트가 있어요. 내용을 입력하거나 삭제해 주세요.'
             );
+
             return;
           }
 
           if (
             !draftPosts.some(
-              p => p.owner
+              p =>
+                p.owner
             )
           ) {
             toast(
               '내 원문 포스트를 한 개 이상 남겨 주세요.'
             );
+
             return;
           }
 
           const posts = [];
 
-          for (const p of draftPosts) {
-            if (p.owner) {
+          for (
+            const p of
+            draftPosts
+          ) {
+            if (
+              p.owner
+            ) {
               const media =
                 parseMediaUrls(
-                  p.mediaRaw || ''
+                  p.mediaRaw ||
+                    ''
                 );
 
-              if (media === null) {
+              if (
+                media ===
+                null
+              ) {
                 return;
               }
 
               const quoteText =
-                p.quoteText.trim();
+                p.quoteText
+                  .trim();
 
               posts.push({
-                owner: true,
-                text: p.text.trim(),
+                owner:
+                  true,
+                text:
+                  p.text.trim(),
                 media,
                 ...(quoteText
                   ? {
                       quote: {
                         author:
-                          p.quoteAuthor.trim(),
+                          p.quoteAuthor
+                            .trim(),
                         text:
                           quoteText
                       }
@@ -1128,13 +1930,19 @@
               });
             } else {
               posts.push({
-                owner: false,
+                owner:
+                  false,
                 author:
-                  p.author.trim() ||
+                  p.author
+                    .trim() ||
                   '@context',
-                text: p.text.trim(),
-                context: true,
-                media: []
+                text:
+                  p.text
+                    .trim(),
+                context:
+                  true,
+                media:
+                  []
               });
             }
           }
@@ -1145,45 +1953,56 @@
             );
 
           const newDate =
-            $('#manageThreadDate')
-              .value || oldDate;
+            $(
+              '#manageThreadDate'
+            ).value ||
+            oldDate;
 
           const newWorkId =
-            $('#manageThreadWork')
-              .value || 'etc';
+            $(
+              '#manageThreadWork'
+            ).value ||
+            'etc';
 
           const firstOwner =
             posts.find(
-              p => p.owner
+              p =>
+                p.owner
             );
 
           t.title =
-            $('#manageThreadTitle')
-              .value.trim() ||
-            firstOwner.text.slice(
-              0,
-              34
-            );
+            $(
+              '#manageThreadTitle'
+            ).value.trim() ||
+            firstOwner.text
+              .slice(
+                0,
+                34
+              );
 
           t.workId =
             newWorkId;
 
           t.author =
             cleanHandle(
-              $('#manageThreadAuthor')
-                .value
+              $(
+                '#manageThreadAuthor'
+              ).value
             ) ||
             t.author ||
             '';
 
-          t.viewingIds = [
-            ...selectedViewingIds
-          ];
+          t.viewingIds =
+            [
+              ...selectedViewingIds
+            ];
 
-          t.posts = posts;
+          t.posts =
+            posts;
 
           if (
-            newDate !== oldDate
+            newDate !==
+            oldDate
           ) {
             t.createdAt =
               `${newDate}T12:00:00.000Z`;
@@ -1194,7 +2013,10 @@
 
           routeTo(
             'thread',
-            { id: t.id }
+            {
+              id:
+                t.id
+            }
           );
 
           toast(
@@ -1207,11 +2029,14 @@
       .addEventListener(
         'click',
         () => {
-          const ok = confirm(
-            `“${t.title}” 타래를 삭제할까요?\n삭제 후 복구할 수 없습니다.`
-          );
+          const ok =
+            confirm(
+              `“${t.title}” 타래를 삭제할까요?\n삭제 후 복구할 수 없습니다.`
+            );
 
-          if (!ok) return;
+          if (!ok) {
+            return;
+          }
 
           const destinationWorkId =
             t.workId;
@@ -1219,7 +2044,8 @@
           state.threads =
             state.threads.filter(
               thread =>
-                thread.id !== t.id
+                thread.id !==
+                t.id
             );
 
           persist();
@@ -1242,11 +2068,14 @@
               {
                 id:
                   destinationWorkId,
-                tab: 'threads'
+                tab:
+                  'threads'
               }
             );
           } else {
-            routeTo('home');
+            routeTo(
+              'home'
+            );
           }
         }
       );
@@ -1256,7 +2085,9 @@
     modalLayer.innerHTML = `
       <div class="modal">
         <div class="modal-head">
-          <h2>직접 추가하기</h2>
+          <h2>
+            직접 추가하기
+          </h2>
 
           <button
             class="close-btn"
@@ -1272,17 +2103,24 @@
             id="manualForm"
           >
             <div class="field">
-              <label>작품</label>
+              <label>
+                작품
+              </label>
 
-              <select id="manualWork">
-                <option value="etc">
+              <select
+                id="manualWork"
+              >
+                <option
+                  value="etc"
+                >
                   미분류
                 </option>
 
                 ${state.works
                   .filter(
                     w =>
-                      w.id !== 'etc'
+                      w.id !==
+                      'etc'
                   )
                   .map(
                     w => `
@@ -1300,7 +2138,9 @@
             </div>
 
             <div class="field">
-              <label>작성 계정</label>
+              <label>
+                작성 계정
+              </label>
 
               ${
                 state.accounts.length
@@ -1326,7 +2166,9 @@
             </div>
 
             <div class="field">
-              <label>타래 제목</label>
+              <label>
+                타래 제목
+              </label>
 
               <input
                 id="manualTitle"
@@ -1334,7 +2176,9 @@
               >
             </div>
 
-            <div id="manualPosts"></div>
+            <div
+              id="manualPosts"
+            ></div>
 
             <button
               type="button"
@@ -1344,7 +2188,9 @@
               ＋ 다음 포스트 추가
             </button>
 
-            <div class="footer-actions">
+            <div
+              class="footer-actions"
+            >
               <button
                 type="button"
                 class="btn"
@@ -1382,10 +2228,16 @@
         'post-editor';
 
       box.innerHTML = `
-        <div class="post-editor-head">
-          <b>POST ${n}</b>
+        <div
+          class="post-editor-head"
+        >
+          <b>
+            POST ${n}
+          </b>
 
-          <div class="inline-actions">
+          <div
+            class="inline-actions"
+          >
             <button
               type="button"
               class="mini-btn"
@@ -1423,7 +2275,9 @@
           placeholder="텍스트를 붙여넣어 주세요…"
         ></textarea>
 
-        <div class="field media-url-box">
+        <div
+          class="field media-url-box"
+        >
           <label>
             이미지 링크 (선택)
           </label>
@@ -1433,35 +2287,52 @@
             placeholder="https://example.com/image-1.jpg&#10;https://example.com/image-2.jpg"
           ></textarea>
 
-          <span class="field-hint">
+          <span
+            class="field-hint"
+          >
             한 줄에 하나씩, 최대 4개.
             이미지는 HTH 안에서 불러오지 않고
             링크만 저장해요.
           </span>
         </div>
 
-        <div class="manual-extras"></div>
+        <div
+          class="manual-extras"
+        ></div>
       `;
 
-      $('#manualPosts').append(
-        box
-      );
-
-      $('[data-remove]', box)
-        ?.addEventListener(
-          'click',
-          () => box.remove()
+      $('#manualPosts')
+        .append(
+          box
         );
 
-      $('[data-quote]', box)
+      $(
+        '[data-remove]',
+        box
+      )
+        ?.addEventListener(
+          'click',
+          () =>
+            box.remove()
+        );
+
+      $(
+        '[data-quote]',
+        box
+      )
         .addEventListener(
           'click',
           () => {
-            $('.manual-extras', box)
+            $(
+              '.manual-extras',
+              box
+            )
               .insertAdjacentHTML(
                 'beforeend',
                 `
-                  <div class="extra-editor quote-editor">
+                  <div
+                    class="extra-editor quote-editor"
+                  >
                     <input
                       class="quote-author"
                       placeholder="인용 작성자 (선택)"
@@ -1477,15 +2348,23 @@
           }
         );
 
-      $('[data-context]', box)
+      $(
+        '[data-context]',
+        box
+      )
         .addEventListener(
           'click',
           () => {
-            $('.manual-extras', box)
+            $(
+              '.manual-extras',
+              box
+            )
               .insertAdjacentHTML(
                 'beforeend',
                 `
-                  <div class="extra-editor context-editor">
+                  <div
+                    class="extra-editor context-editor"
+                  >
                     <input
                       class="context-author"
                       placeholder="답글 작성자 @아이디"
@@ -1501,7 +2380,10 @@
           }
         );
 
-      $('.manual-text', box)
+      $(
+        '.manual-text',
+        box
+      )
         .focus();
     }
 
@@ -1524,35 +2406,57 @@
 
           const posts = [];
 
-          for (const box of editors) {
+          for (
+            const box of
+            editors
+          ) {
             const text =
-              $('.manual-text', box)
-                .value.trim();
+              $(
+                '.manual-text',
+                box
+              )
+                .value
+                .trim();
 
-            if (!text) continue;
+            if (!text) {
+              continue;
+            }
 
             const media =
               parseMediaUrls(
                 $(
                   '.manual-media-urls',
                   box
-                )?.value || ''
+                )?.value ||
+                  ''
               );
 
-            if (media === null) {
+            if (
+              media ===
+                null
+            ) {
               return;
             }
 
             const qText =
-              $('.quote-text', box)
-                ?.value.trim();
+              $(
+                '.quote-text',
+                box
+              )
+                ?.value
+                .trim();
 
             const cText =
-              $('.context-text', box)
-                ?.value.trim();
+              $(
+                '.context-text',
+                box
+              )
+                ?.value
+                .trim();
 
             posts.push({
-              owner: true,
+              owner:
+                true,
               text,
               media,
               ...(qText
@@ -1562,7 +2466,9 @@
                         $(
                           '.quote-author',
                           box
-                        )?.value.trim() ||
+                        )
+                          ?.value
+                          .trim() ||
                         '',
                       text:
                         qText
@@ -1571,37 +2477,47 @@
                 : {})
             });
 
-            if (cText) {
+            if (
+              cText
+            ) {
               posts.push({
-                owner: false,
+                owner:
+                  false,
                 author:
                   $(
                     '.context-author',
                     box
-                  )?.value.trim() ||
+                  )
+                    ?.value
+                    .trim() ||
                   '@context',
                 text:
                   cText,
-                context: true,
-                media: []
+                context:
+                  true,
+                media:
+                  []
               });
             }
           }
 
           if (
             !posts.some(
-              p => p.owner
+              p =>
+                p.owner
             )
           ) {
             toast(
               '포스트를 한 개 이상 입력해 주세요.'
             );
+
             return;
           }
 
           const firstOwner =
             posts.find(
-              p => p.owner
+              p =>
+                p.owner
             );
 
           const t = {
@@ -1610,24 +2526,32 @@
               Date.now(),
 
             workId:
-              $('#manualWork')
-                ?.value ||
+              $(
+                '#manualWork'
+              )?.value ||
               'etc',
 
-            viewingIds: [],
+            viewingIds:
+              [],
 
             title:
-              $('#manualTitle')
-                .value.trim() ||
-              firstOwner.text.slice(
-                0,
-                34
-              ),
+              $(
+                '#manualTitle'
+              )
+                .value
+                .trim() ||
+              firstOwner
+                .text
+                .slice(
+                  0,
+                  34
+                ),
 
             author:
               cleanHandle(
-                $('#manualAuthor')
-                  .value
+                $(
+                  '#manualAuthor'
+                ).value
               ) ||
               defaultAccount()
                 ?.handle ||
@@ -1640,7 +2564,8 @@
             source:
               'manual',
 
-            urls: [],
+            urls:
+              [],
 
             posts
           };
@@ -1650,7 +2575,8 @@
               state.threads
             )
           ) {
-            state.threads = [];
+            state.threads =
+              [];
           }
 
           state.threads.unshift(
@@ -1666,47 +2592,25 @@
 
           routeTo(
             'thread',
-            { id: t.id }
+            {
+              id:
+                t.id
+            }
           );
         }
       );
   };
 
-  openImportPreview = function() {
-    const rawUrls =
-      $('#importUrls')
-        ?.value.trim() || '';
-
-    if (!rawUrls) {
-      toast(
-        'X 타래 URL을 입력해 주세요.'
-      );
-      return;
-    }
-
-    const urls = rawUrls
-      .split(/\n+/)
-      .map(x => x.trim())
-      .filter(Boolean);
-
-    const valid =
-      urls.every(u =>
-        /(?:https?:\/\/)?(?:www\.)?(?:x\.com|twitter\.com)\/[^\/\s]+\/status\/\d+/i.test(
-          u
-        )
-      );
-
-    if (!valid) {
-      toast(
-        '올바른 X 게시물 URL인지 확인해 주세요.'
-      );
-      return;
-    }
+  openImport = function() {
+    const def =
+      defaultAccount();
 
     modalLayer.innerHTML = `
       <div class="modal">
         <div class="modal-head">
-          <h2>링크 가져오기</h2>
+          <h2>
+            브라우저에서 가져오기
+          </h2>
 
           <button
             class="close-btn"
@@ -1717,38 +2621,431 @@
         </div>
 
         <div class="modal-body">
-          <div class="setup-notice">
-            <span class="setup-icon">
-              ↗
-            </span>
+          <form
+            class="form-grid"
+            id="collectorImportForm"
+          >
+            <div
+              class="collector-note"
+            >
+              <b>
+                무료 브라우저 수집 방식
+              </b>
+              <br>
+              X에서 HTH 수집기를 실행하고
+              타래 끝까지 스크롤한 뒤,
+              수집기가 복사해 준 JSON을
+              아래 칸에 붙여넣어요.
+              X API는 사용하지 않습니다.
+            </div>
 
-            <h3>
-              X API 연결 전 단계예요.
-            </h3>
+            <div class="field">
+              <label>
+                수집 데이터
+              </label>
 
-            <p>
-              X 개발자 앱과 OAuth를 연결하면
-              실제 원문을 가져오고,
-              첨부 이미지는 파일로 저장하거나
-              화면에 직접 띄우지 않고
-              원본 이미지 URL만 기록하게 됩니다.
-            </p>
+              <textarea
+                id="collectorData"
+                class="collector-json"
+                placeholder='{"version":1,"posts":[...]}'
+              ></textarea>
 
-            <div class="footer-actions">
+              <span
+                class="field-hint"
+              >
+                JSON은 저장 전에 브라우저 안에서만 읽고,
+                선택한 포스트만 HTH에 저장해요.
+              </span>
+            </div>
+
+            <div class="field">
+              <label>
+                내 X 계정
+              </label>
+
+              ${
+                state.accounts.length
+                  ? `
+                    <select
+                      id="collectorOwner"
+                    >
+                      ${accountOptions(
+                        def?.handle ||
+                          '',
+                        false
+                      )}
+                    </select>
+                  `
+                  : `
+                    <input
+                      id="collectorOwner"
+                      placeholder="@내계정"
+                    >
+                  `
+              }
+
+              <span
+                class="field-hint"
+              >
+                이 계정의 포스트를
+                ‘내 원문’으로 자동 선택해요.
+              </span>
+            </div>
+
+            <div class="field">
+              <label>
+                작품
+              </label>
+
+              <select
+                id="collectorWork"
+              >
+                <option
+                  value="etc"
+                >
+                  미분류
+                </option>
+
+                ${state.works
+                  .filter(
+                    w =>
+                      w.id !==
+                      'etc'
+                  )
+                  .map(
+                    w =>
+                      `<option value="${w.id}">${esc(
+                        w.title
+                      )}</option>`
+                  )
+                  .join('')}
+              </select>
+            </div>
+
+            <div class="field">
+              <label>
+                타래 제목
+              </label>
+
+              <input
+                id="collectorTitle"
+                placeholder="비워두면 첫 포스트에서 자동 생성"
+              >
+            </div>
+
+            <div class="field">
+              <label>
+                관극 연결 (선택)
+              </label>
+
+              <div
+                class="chips"
+                id="collectorViewingChips"
+              ></div>
+            </div>
+
+            <div
+              class="footer-actions"
+            >
               <button
+                type="button"
                 class="btn"
                 data-close
               >
-                닫기
+                취소
               </button>
 
               <button
+                type="button"
                 class="btn primary"
-                id="goManual"
+                id="previewImport"
               >
-                직접 추가하기
+                가져올 포스트 확인
               </button>
             </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    bindModalClose();
+
+    const work =
+      $('#collectorWork');
+
+    function refreshViewings() {
+      const list =
+        (
+          state.viewings ||
+          []
+        )
+          .filter(
+            v =>
+              String(
+                v.workId
+              ) ===
+              String(
+                work.value
+              )
+          )
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              String(
+                b.date ||
+                  ''
+              ).localeCompare(
+                String(
+                  a.date ||
+                    ''
+                )
+              )
+          );
+
+      $(
+        '#collectorViewingChips'
+      ).innerHTML =
+        list.length
+          ? list
+              .map(
+                v => `
+                  <label class="chip">
+                    <input
+                      type="checkbox"
+                      name="collectorViewing"
+                      value="${esc(
+                        String(
+                          v.id
+                        )
+                      )}"
+                    >
+
+                    ${fmtDate(
+                      v.date
+                    )}
+
+                    ${esc(
+                      v.session ||
+                        ''
+                    )}
+                  </label>
+                `
+              )
+              .join('')
+          : `
+            <span
+              class="field-hint"
+            >
+              연결할 관극이 아직 없어요.
+            </span>
+          `;
+    }
+
+    work.addEventListener(
+      'change',
+      refreshViewings
+    );
+
+    refreshViewings();
+
+    $('#previewImport')
+      .addEventListener(
+        'click',
+        openImportPreview
+      );
+  };
+
+  openImportPreview = function() {
+    const raw =
+      $(
+        '#collectorData'
+      )
+        ?.value
+        .trim() ||
+      '';
+
+    if (!raw) {
+      toast(
+        '수집기에서 복사한 JSON을 붙여넣어 주세요.'
+      );
+
+      return;
+    }
+
+    let payload;
+
+    try {
+      payload =
+        parseCollectorPayload(
+          raw
+        );
+    } catch (error) {
+      toast(
+        error.message ||
+          '수집 데이터를 읽지 못했어요.'
+      );
+
+      return;
+    }
+
+    const workId =
+      $(
+        '#collectorWork'
+      )?.value ||
+      'etc';
+
+    const titleDraft =
+      $(
+        '#collectorTitle'
+      )
+        ?.value
+        .trim() ||
+      '';
+
+    const ownerHandle =
+      collectorHandle(
+        $(
+          '#collectorOwner'
+        )?.value ||
+          ''
+      ) ||
+      collectorHandle(
+        defaultAccount()
+          ?.handle ||
+          ''
+      );
+
+    if (
+      !ownerHandle
+    ) {
+      toast(
+        '내 X 계정을 먼저 입력해 주세요.'
+      );
+
+      return;
+    }
+
+    const selectedViewingIds =
+      $$(
+        'input[name="collectorViewing"]:checked'
+      ).map(
+        input =>
+          input.value
+      );
+
+    const ownerKey =
+      ownerHandle
+        .toLowerCase();
+
+    const drafts =
+      payload.posts.map(
+        (
+          post,
+          index
+        ) => ({
+          ...post,
+          index,
+          mode:
+            post.author &&
+            post.author
+              .toLowerCase() ===
+              ownerKey
+              ? 'owner'
+              : 'exclude'
+        })
+      );
+
+    const autoOwnerCount =
+      drafts.filter(
+        post =>
+          post.mode ===
+          'owner'
+      ).length;
+
+    modalLayer.innerHTML = `
+      <div class="modal">
+        <div class="modal-head">
+          <h2>
+            가져올 포스트 확인
+          </h2>
+
+          <button
+            class="close-btn"
+            data-close
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div
+            class="collector-summary"
+          >
+            <span
+              class="chip accent"
+            >
+              수집 ${drafts.length}개
+            </span>
+
+            <span
+              class="chip mint"
+            >
+              내 원문 자동 선택
+              ${autoOwnerCount}개
+            </span>
+
+            <span
+              class="chip"
+            >
+              내 계정
+              ${esc(
+                ownerHandle
+              )}
+            </span>
+          </div>
+
+          <div
+            class="collector-note"
+          >
+            내 계정과 일치하는 글은
+            <b>
+              내 원문
+            </b>
+            으로 자동 선택했어요.
+
+            다른 사람 글은 기본적으로 제외되어 있고,
+            필요한 답글만
+            <b>
+              맥락 답글
+            </b>
+            로 바꾸면 됩니다.
+          </div>
+
+          <div
+            class="collector-preview"
+            id="collectorPreview"
+          ></div>
+
+          <div
+            class="footer-actions"
+          >
+            <button
+              type="button"
+              class="btn"
+              data-close
+            >
+              취소
+            </button>
+
+            <button
+              type="button"
+              class="btn primary"
+              id="saveCollectorImport"
+            >
+              선택한 포스트 저장
+            </button>
           </div>
         </div>
       </div>
@@ -1756,10 +3053,348 @@
 
     bindModalClose();
 
-    $('#goManual')
-      ?.addEventListener(
+    function renderPreview() {
+      $(
+        '#collectorPreview'
+      ).innerHTML =
+        drafts
+          .map(
+            post => `
+              <div
+                class="collector-post"
+                data-collector-index="${post.index}"
+                data-mode="${post.mode}"
+              >
+                <div
+                  class="collector-post-head"
+                >
+                  <div
+                    class="collector-post-meta"
+                  >
+                    <b>
+                      ${esc(
+                        post.author ||
+                          '@unknown'
+                      )}
+                    </b>
+
+                    <small>
+                      ${
+                        post.createdAt
+                          ? esc(
+                              post.createdAt
+                            )
+                          : '작성일 정보 없음'
+                      }
+
+                      ${
+                        post.url
+                          ? ` · ${esc(
+                              post.url
+                            )}`
+                          : ''
+                      }
+                    </small>
+                  </div>
+
+                  <select
+                    class="collector-mode"
+                    data-collector-mode="${post.index}"
+                  >
+                    <option
+                      value="owner"
+                      ${
+                        post.mode ===
+                        'owner'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      내 원문
+                    </option>
+
+                    <option
+                      value="context"
+                      ${
+                        post.mode ===
+                        'context'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      맥락 답글
+                    </option>
+
+                    <option
+                      value="exclude"
+                      ${
+                        post.mode ===
+                        'exclude'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      제외
+                    </option>
+                  </select>
+                </div>
+
+                <div
+                  class="collector-post-body"
+                >
+                  ${esc(
+                    post.text
+                  )}
+                </div>
+
+                <div
+                  class="collector-post-foot"
+                >
+                  ${
+                    post.quote
+                      ? `
+                        <span>
+                          인용 1
+                        </span>
+                      `
+                      : ''
+                  }
+
+                  ${
+                    post.media.length
+                      ? `
+                        <span>
+                          이미지 링크
+                          ${post.media.length}
+                        </span>
+                      `
+                      : ''
+                  }
+                </div>
+              </div>
+            `
+          )
+          .join('');
+
+      $$(
+        '[data-collector-mode]'
+      ).forEach(
+        select => {
+          select.addEventListener(
+            'change',
+            () => {
+              const index =
+                Number(
+                  select.dataset
+                    .collectorMode
+                );
+
+              drafts[
+                index
+              ].mode =
+                select.value;
+
+              select
+                .closest(
+                  '.collector-post'
+                )
+                ?.setAttribute(
+                  'data-mode',
+                  select.value
+                );
+            }
+          );
+        }
+      );
+    }
+
+    renderPreview();
+
+    $('#saveCollectorImport')
+      .addEventListener(
         'click',
-        openManual
+        () => {
+          const selected =
+            drafts.filter(
+              post =>
+                post.mode !==
+                'exclude'
+            );
+
+          const ownerPosts =
+            selected.filter(
+              post =>
+                post.mode ===
+                'owner'
+            );
+
+          if (
+            !ownerPosts.length
+          ) {
+            toast(
+              '내 원문으로 저장할 포스트를 한 개 이상 선택해 주세요.'
+            );
+
+            return;
+          }
+
+          const posts =
+            selected.map(
+              post => {
+                if (
+                  post.mode ===
+                  'owner'
+                ) {
+                  return {
+                    owner:
+                      true,
+
+                    text:
+                      post.text,
+
+                    media:
+                      mediaFromCollector(
+                        post.media
+                      ),
+
+                    ...(post.quote
+                      ? {
+                          quote: {
+                            author:
+                              post.quote
+                                .author ||
+                              '',
+                            text:
+                              post.quote
+                                .text
+                          }
+                        }
+                      : {})
+                  };
+                }
+
+                return {
+                  owner:
+                    false,
+
+                  author:
+                    post.author ||
+                    '@context',
+
+                  text:
+                    post.text,
+
+                  context:
+                    true,
+
+                  media:
+                    []
+                };
+              }
+            );
+
+          const firstOwnerDraft =
+            ownerPosts[0];
+
+          const createdCandidate =
+            new Date(
+              firstOwnerDraft
+                .createdAt ||
+                ''
+            );
+
+          const createdAt =
+            Number.isNaN(
+              createdCandidate
+                .getTime()
+            )
+              ? new Date()
+                  .toISOString()
+              : createdCandidate
+                  .toISOString();
+
+          const urls =
+            [
+              ...new Set([
+                ...(
+                  payload.pageUrl
+                    ? [
+                        payload.pageUrl
+                      ]
+                    : []
+                ),
+
+                ...ownerPosts
+                  .map(
+                    post =>
+                      post.url
+                  )
+                  .filter(
+                    Boolean
+                  )
+              ])
+            ];
+
+          const thread = {
+            id:
+              't' +
+              Date.now(),
+
+            workId,
+
+            viewingIds:
+              selectedViewingIds,
+
+            title:
+              titleDraft ||
+              firstOwnerDraft
+                .text
+                .slice(
+                  0,
+                  34
+                ),
+
+            author:
+              ownerHandle,
+
+            createdAt,
+
+            source:
+              'x',
+
+            urls,
+
+            posts
+          };
+
+          if (
+            !Array.isArray(
+              state.threads
+            )
+          ) {
+            state.threads =
+              [];
+          }
+
+          state.threads.unshift(
+            thread
+          );
+
+          persist();
+          closeModal();
+
+          toast(
+            `${ownerPosts.length}개 원문을 백업했어요.`
+          );
+
+          routeTo(
+            'thread',
+            {
+              id:
+                thread.id
+            }
+          );
+        }
       );
   };
 
