@@ -14,8 +14,8 @@ class AppPatchInjector {
   element(element) {
     element.append(
       [
-        '<script src="/sync-safety.js?v=20261005-1"></script>',
-        '<script src="/app-patch.js?v=20261005-1"></script>'
+        '<script src="/sync-safety.js?v=20261005-2"></script>',
+        '<script src="/app-patch.js?v=20261005-2"></script>'
       ].join(""),
       { html: true }
     );
@@ -32,7 +32,9 @@ function jsonError(
       error: message,
       ...extra
     },
-    { status }
+    {
+      status
+    }
   );
 }
 
@@ -45,16 +47,22 @@ function asString(
     : String(value);
 }
 
-function parseJsonArray(value) {
+function parseJsonArray(
+  value
+) {
   if (!value) {
     return [];
   }
 
   try {
     const parsed =
-      JSON.parse(value);
+      JSON.parse(
+        value
+      );
 
-    return Array.isArray(parsed)
+    return Array.isArray(
+      parsed
+    )
       ? parsed
       : [];
   } catch {
@@ -62,7 +70,9 @@ function parseJsonArray(value) {
   }
 }
 
-function archiveStats(archive) {
+function archiveStats(
+  archive
+) {
   const accounts =
     Array.isArray(
       archive?.accounts
@@ -95,16 +105,23 @@ function archiveStats(archive) {
   let posts = 0;
   let media = 0;
 
-  for (const viewing of viewings) {
+  for (
+    const viewing of
+    viewings
+  ) {
     viewingCast +=
       Array.isArray(
         viewing?.cast
       )
-        ? viewing.cast.length
+        ? viewing.cast
+            .length
         : 0;
   }
 
-  for (const thread of threads) {
+  for (
+    const thread of
+    threads
+  ) {
     const threadPosts =
       Array.isArray(
         thread?.posts
@@ -115,12 +132,16 @@ function archiveStats(archive) {
     posts +=
       threadPosts.length;
 
-    for (const post of threadPosts) {
+    for (
+      const post of
+      threadPosts
+    ) {
       media +=
         Array.isArray(
           post?.media
         )
-          ? post.media.length
+          ? post.media
+              .length
           : 0;
     }
   }
@@ -158,14 +179,13 @@ function archiveStats(archive) {
 async function archiveVersion(
   archive
 ) {
-  const text =
-    JSON.stringify(
-      archive
-    );
-
   const bytes =
     new TextEncoder()
-      .encode(text);
+      .encode(
+        JSON.stringify(
+          archive
+        )
+      );
 
   const digest =
     await crypto.subtle.digest(
@@ -182,8 +202,13 @@ async function archiveVersion(
     .map(
       byte =>
         byte
-          .toString(16)
-          .padStart(2, "0")
+          .toString(
+            16
+          )
+          .padStart(
+            2,
+            "0"
+          )
     )
     .join("");
 }
@@ -222,9 +247,179 @@ function normalizeIncomingArchive(
   };
 }
 
+/*
+  DELETE → INSERT 방식이기 때문에
+  유효하지 않은 항목이 하나라도 들어오면
+  기존 DB를 건드리기 전에 거절.
+*/
+
+function validateIncomingArchiveShape(
+  archive
+) {
+  for (
+    const account of
+    archive.accounts
+  ) {
+    if (
+      !asString(
+        account?.handle
+      ).trim()
+    ) {
+      return (
+        "X 계정 데이터에 빈 계정이 있어 " +
+        "저장을 중단했어요."
+      );
+    }
+  }
+
+  for (
+    const viewing of
+    archive.viewings
+  ) {
+    if (
+      !asString(
+        viewing?.id
+      ).trim() ||
+      !asString(
+        viewing?.date
+      ).trim()
+    ) {
+      return (
+        "관극 데이터에 ID 또는 날짜가 비어 있어 " +
+        "저장을 중단했어요."
+      );
+    }
+  }
+
+  for (
+    const thread of
+    archive.threads
+  ) {
+    if (
+      !asString(
+        thread?.id
+      ).trim() ||
+      !asString(
+        thread?.title
+      ).trim()
+    ) {
+      return (
+        "타래 데이터에 ID 또는 제목이 비어 있어 " +
+        "저장을 중단했어요."
+      );
+    }
+  }
+
+  return null;
+}
+
+function normalizePermit(
+  rawPermit,
+  currentVersion
+) {
+  const valid =
+    rawPermit &&
+    asString(
+      rawPermit
+        .baseVersion
+    ).trim() ===
+      currentVersion;
+
+  const toSet =
+    (
+      value,
+      lower = false
+    ) =>
+      new Set(
+        (
+          valid &&
+          Array.isArray(
+            value
+          )
+            ? value
+            : []
+        )
+          .map(
+            item =>
+              asString(
+                item
+              ).trim()
+          )
+          .filter(
+            Boolean
+          )
+          .map(
+            item =>
+              lower
+                ? item.toLowerCase()
+                : item
+          )
+      );
+
+  return {
+    threads:
+      toSet(
+        rawPermit
+          ?.threads
+      ),
+
+    viewings:
+      toSet(
+        rawPermit
+          ?.viewings
+      ),
+
+    accounts:
+      toSet(
+        rawPermit
+          ?.accounts,
+        true
+      )
+  };
+}
+
+function removedKeys(
+  currentItems,
+  nextItems,
+  keyFn
+) {
+  const nextSet =
+    new Set(
+      nextItems
+        .map(
+          keyFn
+        )
+        .filter(
+          Boolean
+        )
+    );
+
+  return currentItems
+    .map(
+      keyFn
+    )
+    .filter(
+      key =>
+        key &&
+        !nextSet.has(
+          key
+        )
+    );
+}
+
+/*
+  핵심 v2 안전장치.
+
+  기존 thread/viewing/account가
+  incoming snapshot에서 사라졌다면,
+  정확한 ID에 대한 delete permit 없이는 거절.
+*/
+
 function validateArchiveReplacement(
   currentArchive,
-  nextArchive
+  nextArchive,
+  rawPermit,
+  currentVersion
 ) {
   const current =
     archiveStats(
@@ -236,59 +431,226 @@ function validateArchiveReplacement(
       nextArchive
     );
 
-  if (
-    current.total > 0 &&
-    next.total === 0
-  ) {
-    return (
-      "기존 기록이 있는데 빈 데이터로 덮어쓰려는 요청을 차단했어요. " +
-      "새로고침해서 서버 기록을 다시 불러온 뒤 시도해 주세요."
+  const permit =
+    normalizePermit(
+      rawPermit,
+      currentVersion
     );
-  }
 
   if (
-    current.threads >= 2 &&
-    next.threads === 0
+    current.total >
+      0 &&
+    next.total ===
+      0
   ) {
-    return (
-      `기존 타래 ${current.threads}개가 한 번에 모두 삭제되려 해서 ` +
-      "안전장치가 저장을 차단했어요."
-    );
+    return {
+      code:
+        "ARCHIVE_EMPTY_REPLACEMENT",
+
+      message:
+        "기존 기록 전체가 빈 데이터로 바뀌려 해서 안전장치가 저장을 차단했어요."
+    };
   }
 
-  if (
-    current.viewings >= 2 &&
-    next.viewings === 0
-  ) {
-    return (
-      `기존 관극 ${current.viewings}개가 한 번에 모두 삭제되려 해서 ` +
-      "안전장치가 저장을 차단했어요."
+  const threadKey =
+    item =>
+      asString(
+        item?.id
+      ).trim();
+
+  const viewingKey =
+    item =>
+      asString(
+        item?.id
+      ).trim();
+
+  const accountKey =
+    item =>
+      asString(
+        item?.handle
+      )
+        .trim()
+        .toLowerCase();
+
+  const removedThreads =
+    removedKeys(
+      currentArchive
+        .threads,
+      nextArchive
+        .threads,
+      threadKey
     );
-  }
+
+  const removedViewings =
+    removedKeys(
+      currentArchive
+        .viewings,
+      nextArchive
+        .viewings,
+      viewingKey
+    );
+
+  const removedAccounts =
+    removedKeys(
+      currentArchive
+        .accounts,
+      nextArchive
+        .accounts,
+      accountKey
+    );
+
+  const blockedThreads =
+    removedThreads.filter(
+      id =>
+        !permit
+          .threads
+          .has(
+            id
+          )
+    );
 
   if (
-    current.posts >= 5 &&
-    next.threads > 0 &&
-    next.posts === 0
+    blockedThreads.length
   ) {
-    return (
-      `기존 포스트 ${current.posts}개가 한 번에 모두 사라지려 해서 ` +
-      "안전장치가 저장을 차단했어요."
-    );
+    return {
+      code:
+        "ARCHIVE_THREAD_DELETE_NOT_PERMITTED",
+
+      message:
+        "사용자가 삭제하지 않은 기존 타래가 사라지려 해서 저장을 차단했어요.",
+
+      blocked:
+        blockedThreads
+    };
   }
 
-  if (
-    current.accounts >= 1 &&
-    next.accounts === 0 &&
-    (
-      current.threads > 0 ||
-      current.viewings > 0
-    )
-  ) {
-    return (
-      "기존 기록이 남아 있는데 X 계정 정보가 전부 삭제되려 해서 " +
-      "안전장치가 저장을 차단했어요."
+  const blockedViewings =
+    removedViewings.filter(
+      id =>
+        !permit
+          .viewings
+          .has(
+            id
+          )
     );
+
+  if (
+    blockedViewings.length
+  ) {
+    return {
+      code:
+        "ARCHIVE_VIEWING_DELETE_NOT_PERMITTED",
+
+      message:
+        "사용자가 삭제하지 않은 기존 관극이 사라지려 해서 저장을 차단했어요.",
+
+      blocked:
+        blockedViewings
+    };
+  }
+
+  const blockedAccounts =
+    removedAccounts.filter(
+      handle =>
+        !permit
+          .accounts
+          .has(
+            handle
+          )
+    );
+
+  if (
+    blockedAccounts.length
+  ) {
+    return {
+      code:
+        "ARCHIVE_ACCOUNT_DELETE_NOT_PERMITTED",
+
+      message:
+        "사용자가 삭제하지 않은 X 계정 정보가 사라지려 해서 저장을 차단했어요.",
+
+      blocked:
+        blockedAccounts
+    };
+  }
+
+  /*
+    타래 자체는 남았는데 posts만 통째로 0이 되는 것도 방지.
+    현재 UI에서는 정상적인 타래를 0 post로 저장할 이유가 없음.
+  */
+
+  const nextThreadsById =
+    new Map(
+      nextArchive
+        .threads
+        .map(
+          thread => [
+            threadKey(
+              thread
+            ),
+            thread
+          ]
+        )
+    );
+
+  for (
+    const currentThread of
+    currentArchive.threads
+  ) {
+    const id =
+      threadKey(
+        currentThread
+      );
+
+    const nextThread =
+      nextThreadsById.get(
+        id
+      );
+
+    if (
+      !nextThread
+    ) {
+      continue;
+    }
+
+    const currentPosts =
+      Array.isArray(
+        currentThread
+          ?.posts
+      )
+        ? currentThread
+            .posts
+            .length
+        : 0;
+
+    const nextPosts =
+      Array.isArray(
+        nextThread
+          ?.posts
+      )
+        ? nextThread
+            .posts
+            .length
+        : 0;
+
+    if (
+      currentPosts >
+        0 &&
+      nextPosts ===
+        0
+    ) {
+      return {
+        code:
+          "ARCHIVE_THREAD_POSTS_WIPED",
+
+        message:
+          "기존 타래의 포스트가 한 번에 전부 비워지려 해서 저장을 차단했어요.",
+
+        blocked: [
+          id
+        ]
+      };
+    }
   }
 
   return null;
@@ -307,14 +669,18 @@ async function getFirebaseUser(
       /^Bearer\s+(.+)$/i
     );
 
-  if (!match) {
+  if (
+    !match
+  ) {
     throw new Response(
       JSON.stringify({
         error:
           "로그인이 필요해요."
       }),
       {
-        status: 401,
+        status:
+          401,
+
         headers: {
           "Content-Type":
             "application/json; charset=utf-8"
@@ -345,14 +711,17 @@ async function getFirebaseUser(
       }
     );
 
-  if (!response.ok) {
+  if (
+    !response.ok
+  ) {
     throw new Response(
       JSON.stringify({
         error:
           "로그인이 만료되었거나 유효하지 않아요."
       }),
       {
-        status: 401,
+        status:
+          401,
 
         headers: {
           "Content-Type":
@@ -378,7 +747,8 @@ async function getFirebaseUser(
           "사용자 정보를 확인할 수 없어요."
       }),
       {
-        status: 401,
+        status:
+          401,
 
         headers: {
           "Content-Type":
@@ -393,10 +763,12 @@ async function getFirebaseUser(
       user.localId,
 
     email:
-      user.email || "",
+      user.email ||
+      "",
 
     displayName:
-      user.displayName || ""
+      user.displayName ||
+      ""
   };
 }
 
@@ -433,7 +805,9 @@ function addBulkInsert(
 
     statements.push(
       db
-        .prepare(sql)
+        .prepare(
+          sql
+        )
         .bind(
           ...chunk.flat()
         )
@@ -470,7 +844,9 @@ async function getArchive(
             sort_order ASC,
             rowid ASC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -487,7 +863,9 @@ async function getArchive(
             sort_order ASC,
             id ASC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -505,7 +883,9 @@ async function getArchive(
             viewing_date DESC,
             created_at DESC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -522,7 +902,9 @@ async function getArchive(
             sort_order ASC,
             id ASC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -540,7 +922,9 @@ async function getArchive(
           ORDER BY
             created_at DESC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -555,7 +939,9 @@ async function getArchive(
             thread_id ASC,
             sort_order ASC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -576,7 +962,9 @@ async function getArchive(
             thread_id ASC,
             sort_order ASC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all(),
 
       env.DB
@@ -594,7 +982,9 @@ async function getArchive(
             post_id ASC,
             sort_order ASC
         `)
-        .bind(userId)
+        .bind(
+          userId
+        )
         .all()
     ]);
 
@@ -603,7 +993,8 @@ async function getArchive(
 
   for (
     const row of
-    viewingCastResult.results ||
+    viewingCastResult
+      .results ||
     []
   ) {
     if (
@@ -623,10 +1014,12 @@ async function getArchive(
       )
       .push({
         actor:
-          row.actor || "",
+          row.actor ||
+          "",
 
         role:
-          row.role || ""
+          row.role ||
+          ""
       });
   }
 
@@ -635,7 +1028,8 @@ async function getArchive(
 
   for (
     const row of
-    mediaResult.results ||
+    mediaResult
+      .results ||
     []
   ) {
     if (
@@ -684,7 +1078,8 @@ async function getArchive(
 
   for (
     const row of
-    postsResult.results ||
+    postsResult
+      .results ||
     []
   ) {
     if (
@@ -756,7 +1151,8 @@ async function getArchive(
 
   for (
     const row of
-    threadViewingsResult.results ||
+    threadViewingsResult
+      .results ||
     []
   ) {
     if (
@@ -782,7 +1178,8 @@ async function getArchive(
   return {
     accounts:
       (
-        accountsResult.results ||
+        accountsResult
+          .results ||
         []
       ).map(
         row => ({
@@ -805,7 +1202,8 @@ async function getArchive(
 
     workCast:
       (
-        workCastResult.results ||
+        workCastResult
+          .results ||
         []
       ).map(
         row => ({
@@ -824,7 +1222,8 @@ async function getArchive(
 
     viewings:
       (
-        viewingsResult.results ||
+        viewingsResult
+          .results ||
         []
       ).map(
         row => ({
@@ -856,7 +1255,8 @@ async function getArchive(
 
     threads:
       (
-        threadsResult.results ||
+        threadsResult
+          .results ||
         []
       ).map(
         row => ({
@@ -940,81 +1340,95 @@ async function putArchive(
       .prepare(
         "DELETE FROM media WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM posts WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM thread_viewings WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM threads WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM viewing_cast WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM viewings WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM work_cast WHERE user_id = ?"
       )
-      .bind(userId),
+      .bind(
+        userId
+      ),
 
     env.DB
       .prepare(
         "DELETE FROM x_accounts WHERE user_id = ?"
       )
-      .bind(userId)
+      .bind(
+        userId
+      )
   ];
 
   const accountRows =
-    accounts
-      .filter(
-        a =>
-          asString(
-            a?.handle
-          ).trim()
-      )
-      .map(
-        (
-          a,
-          index
-        ) => [
-          userId,
-          asString(
-            a.id ||
-            `account-${index}`
-          ),
-          asString(
-            a.handle
-          ).trim(),
-          asString(
-            a.label
-          ),
-          a.isDefault
-            ? 1
-            : 0,
-          index
-        ]
-      );
+    accounts.map(
+      (
+        a,
+        index
+      ) => [
+        userId,
+
+        asString(
+          a.id ||
+          `account-${index}`
+        ),
+
+        asString(
+          a.handle
+        ).trim(),
+
+        asString(
+          a.label
+        ),
+
+        a.isDefault
+          ? 1
+          : 0,
+
+        index
+      ]
+    );
 
   addBulkInsert(
     statements,
@@ -1048,15 +1462,19 @@ async function putArchive(
           index
         ) => [
           userId,
+
           asString(
             c.workId
           ),
+
           asString(
             c.actor
           ).trim(),
+
           asString(
             c.role
           ).trim(),
+
           Number.isFinite(
             c.sortOrder
           )
@@ -1091,31 +1509,24 @@ async function putArchive(
   ) {
     const id =
       asString(
-        viewing?.id
+        viewing.id
       ).trim();
 
     const date =
       asString(
-        viewing?.date
+        viewing.date
       ).trim();
-
-    if (
-      !id ||
-      !date
-    ) {
-      continue;
-    }
 
     viewingRows.push([
       userId,
 
       id,
 
-      viewing?.workId ===
+      viewing.workId ===
       "etc"
         ? null
         : asString(
-            viewing?.workId ||
+            viewing.workId ||
             ""
           ).trim() ||
           null,
@@ -1123,17 +1534,17 @@ async function putArchive(
       date,
 
       asString(
-        viewing?.session
+        viewing.session
       ),
 
       asString(
-        viewing?.theater
+        viewing.theater
       )
     ]);
 
     const cast =
       Array.isArray(
-        viewing?.cast
+        viewing.cast
       )
         ? viewing.cast
         : [];
@@ -1156,11 +1567,15 @@ async function putArchive(
 
         viewingCastRows.push([
           userId,
+
           id,
+
           actor,
+
           asString(
             member?.role
           ).trim(),
+
           index
         ]);
       }
@@ -1214,55 +1629,45 @@ async function putArchive(
   ) {
     const threadId =
       asString(
-        thread?.id
+        thread.id
       ).trim();
-
-    const title =
-      asString(
-        thread?.title
-      ).trim();
-
-    if (
-      !threadId ||
-      !title
-    ) {
-      continue;
-    }
 
     threadRows.push([
       userId,
 
       threadId,
 
-      thread?.workId ===
+      thread.workId ===
       "etc"
         ? null
         : asString(
-            thread?.workId ||
+            thread.workId ||
             ""
           ).trim() ||
           null,
 
-      title,
+      asString(
+        thread.title
+      ).trim(),
 
       asString(
-        thread?.author
+        thread.author
       ),
 
       asString(
-        thread?.createdAt ||
+        thread.createdAt ||
         new Date()
           .toISOString()
       ),
 
       asString(
-        thread?.source ||
+        thread.source ||
         "manual"
       ),
 
       JSON.stringify(
         Array.isArray(
-          thread?.urls
+          thread.urls
         )
           ? thread.urls
           : []
@@ -1271,7 +1676,7 @@ async function putArchive(
 
     const viewingIds =
       Array.isArray(
-        thread?.viewingIds
+        thread.viewingIds
       )
         ? thread.viewingIds
         : [];
@@ -1303,7 +1708,7 @@ async function putArchive(
 
     const posts =
       Array.isArray(
-        thread?.posts
+        thread.posts
       )
         ? thread.posts
         : [];
@@ -1318,26 +1723,37 @@ async function putArchive(
 
         postRows.push([
           userId,
+
           postId,
+
           threadId,
+
           post?.owner
             ? 1
             : 0,
+
           asString(
             post?.author
           ),
+
           asString(
             post?.text
           ),
+
           asString(
-            post?.quote?.author
+            post?.quote
+              ?.author
           ),
+
           asString(
-            post?.quote?.text
+            post?.quote
+              ?.text
           ),
+
           post?.context
             ? 1
             : 0,
+
           postIndex
         ]);
 
@@ -1355,14 +1771,14 @@ async function putArchive(
           const item of
           media
         ) {
-          const url =
+          const mediaUrl =
             asString(
               item?.src
             ).trim();
 
           if (
             !/^https?:\/\//i.test(
-              url
+              mediaUrl
             )
           ) {
             continue;
@@ -1370,13 +1786,19 @@ async function putArchive(
 
           mediaRows.push([
             userId,
+
             `${postId}:m:${mediaOrder}`,
+
             postId,
+
             "link",
-            url,
+
+            mediaUrl,
+
             asString(
               item?.alt
             ),
+
             mediaOrder
           ]);
 
@@ -1484,6 +1906,10 @@ export default {
         const userId =
           user.uid;
 
+        /*
+          작품
+        */
+
         if (
           url.pathname ===
             "/api/works" &&
@@ -1560,7 +1986,8 @@ export default {
           return Response.json(
             work,
             {
-              status: 201
+              status:
+                201
             }
           );
         }
@@ -1670,7 +2097,8 @@ export default {
               .run();
 
           if (
-            !result.meta.changes
+            !result.meta
+              .changes
           ) {
             return jsonError(
               "작품을 찾을 수 없어요.",
@@ -1679,9 +2107,14 @@ export default {
           }
 
           return Response.json({
-            ok: true
+            ok:
+              true
           });
         }
+
+        /*
+          Archive GET
+        */
 
         if (
           url.pathname ===
@@ -1713,6 +2146,10 @@ export default {
           });
         }
 
+        /*
+          Archive PUT
+        */
+
         if (
           url.pathname ===
             "/api/archive" &&
@@ -1721,6 +2158,11 @@ export default {
         ) {
           const body =
             await request.json();
+
+          /*
+            현재 DB 상태를 먼저 읽음.
+            DELETE는 아직 안 함.
+          */
 
           const currentArchive =
             await getArchive(
@@ -1738,6 +2180,11 @@ export default {
               body?._baseVersion
             ).trim();
 
+          /*
+            안전장치 없는 구버전 클라이언트는
+            서버 쓰기 자체를 허용하지 않음.
+          */
+
           if (
             !baseVersion
           ) {
@@ -1750,6 +2197,10 @@ export default {
               }
             );
           }
+
+          /*
+            오래된 탭 방지.
+          */
 
           if (
             baseVersion !==
@@ -1772,21 +2223,58 @@ export default {
               body
             );
 
+          /*
+            데이터 구조가 이상하면
+            DELETE 전에 즉시 거절.
+          */
+
+          const shapeProblem =
+            validateIncomingArchiveShape(
+              nextArchive
+            );
+
+          if (
+            shapeProblem
+          ) {
+            return jsonError(
+              shapeProblem,
+              400,
+              {
+                code:
+                  "ARCHIVE_INVALID_SHAPE"
+              }
+            );
+          }
+
+          /*
+            기존 ID가 사라지는 경우
+            사용자 삭제 허가가 있는지 확인.
+          */
+
           const safetyProblem =
             validateArchiveReplacement(
               currentArchive,
-              nextArchive
+              nextArchive,
+              body?._deletePermit,
+              currentVersion
             );
 
           if (
             safetyProblem
           ) {
             return jsonError(
-              safetyProblem,
+              safetyProblem
+                .message,
               409,
               {
                 code:
-                  "ARCHIVE_SAFETY_BLOCK",
+                  safetyProblem
+                    .code,
+
+                blocked:
+                  safetyProblem
+                    .blocked ||
+                  [],
 
                 current:
                   archiveStats(
@@ -1800,6 +2288,11 @@ export default {
               }
             );
           }
+
+          /*
+            여기까지 전부 통과해야
+            기존 snapshot을 교체함.
+          */
 
           await putArchive(
             env,
@@ -1819,7 +2312,8 @@ export default {
             );
 
           return Response.json({
-            ok: true,
+            ok:
+              true,
 
             _version:
               savedVersion,
@@ -1843,9 +2337,11 @@ export default {
         );
 
       const contentType =
-        assetResponse.headers.get(
-          "content-type"
-        ) || "";
+        assetResponse
+          .headers
+          .get(
+            "content-type"
+          ) || "";
 
       if (
         contentType.includes(
@@ -1867,7 +2363,9 @@ export default {
       }
 
       return assetResponse;
-    } catch (error) {
+    } catch (
+      error
+    ) {
       if (
         error instanceof
         Response
